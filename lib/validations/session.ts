@@ -63,22 +63,18 @@ export type ConfigureInterviewValues = z.infer<typeof configureInterviewSchema>;
 
 export const MAX_ANSWER_AUDIO_BYTES = 25 * 1024 * 1024;
 
-// Spoken-answer upload (FormData: file + durationSeconds). MediaRecorder
-// output varies by browser — audio/webm (Chrome/Firefox), audio/mp4 (Safari),
-// sometimes reported under a video/* container for audio-only tracks.
+// Spoken answers are uploaded straight to Supabase Storage from the browser —
+// Vercel caps Server Action request bodies at 4.5MB, far below a few minutes of
+// audio — so the action receives only a reference to the stored object. The
+// mimeType echoes MediaRecorder's output, which varies by browser: audio/webm
+// (Chrome/Firefox), audio/mp4 (Safari), occasionally an audio/ogg fallback.
 export const audioAnswerSchema = z.object({
-  file: z
-    .instanceof(File)
-    .refine((f) => f.size > 0, "The recording is empty.")
-    .refine(
-      (f) => f.size <= MAX_ANSWER_AUDIO_BYTES,
-      "Recording is too large (25MB max).",
-    )
-    .refine(
-      (f) =>
-        f.type === "" || f.type.startsWith("audio/") || f.type.startsWith("video/"),
-      "Not an audio recording.",
-    ),
+  storagePath: z.string().min(1).max(1024),
+  mimeType: z
+    .string()
+    .max(255)
+    .optional()
+    .transform((v) => (v && v.length > 0 ? v : "audio/webm")),
   durationSeconds: z.coerce
     .number()
     .int()

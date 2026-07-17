@@ -25,7 +25,10 @@ import {
   buildSessionSummaryMessages,
 } from "@/lib/prompts/session-summary";
 import type { ProjectAnalysis } from "@/lib/prompts/project-analysis";
-import { audioAnswerSchema } from "@/lib/validations/session";
+import {
+  audioAnswerSchema,
+  MAX_ANSWER_AUDIO_BYTES,
+} from "@/lib/validations/session";
 import { createClient } from "@/lib/supabase/server";
 
 // Follow-up questions are inserted with order_index >= this base, so they're
@@ -298,27 +301,33 @@ export async function submitTextAnswer(
 }
 
 /**
- * Voice answer: upload the recording, transcribe it, then run the exact same
- * evaluation/follow-up path as a typed answer — STT just produces the
- * transcript string that typing otherwise would.
+ * Voice answer: the browser has already uploaded the recording straight to
+ * storage (Vercel's 4.5MB Server Action body limit rules out routing a few
+ * minutes of audio through here), so we transcribe from the stored object and
+ * then run the exact same evaluation/follow-up path as a typed answer — STT
+ * just produces the transcript string that typing otherwise would.
  */
 export async function submitAudioAnswer(
   projectId: string,
   sessionId: string,
   questionId: string,
-  formData: FormData,
+  input: { storagePath: string; mimeType?: string; durationSeconds?: number | null },
 ) {
   const supabase = await createClient();
   const user = await requireUser(supabase);
 
-  const parsed = audioAnswerSchema.safeParse({
-    file: formData.get("file"),
-    durationSeconds: formData.get("durationSeconds"),
-  });
+  const parsed = audioAnswerSchema.safeParse(input);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid recording." };
   }
-  const { file, durationSeconds } = parsed.data;
+  const { storagePath, mimeType, durationSeconds } = parsed.data;
+
+  // The client chose this path, so refuse anything outside the caller's own
+  // session folder. Storage RLS enforces the same boundary, but rejecting here
+  // yields a clear message instead of an opaque download failure.
+  if (!storagePath.startsWith(`${user.id}/${sessionId}/`)) {
+    return { error: "That recording doesn't belong to this session." };
+  }
 
   const session = await loadSession(supabase, projectId, sessionId);
   if (!session) return { error: "Session not found." };
@@ -327,20 +336,32 @@ export async function submitAudioAnswer(
   const question = questions.find((q) => q.id === questionId);
   if (!question) return { error: "Question not found." };
 
-  const mimeType = file.type || "audio/webm";
+  // Pull the recording back down to transcribe it. This server→storage fetch
+  // isn't an inbound request body, so the Server Action size limit never bites.
+  const { data: blob, error: downloadError } = await supabase.storage
+    .from(AUDIO_BUCKET)
+    .download(storagePath);
+  if (downloadError || !blob) {
+    return {
+      error: "We couldn't read your recording. Please record it again.",
+    };
+  }
+  if (blob.size === 0) {
+    return {
+      error:
+        "We couldn't hear anything in that recording. Try again, or type your answer.",
+    };
+  }
+  if (blob.size > MAX_ANSWER_AUDIO_BYTES) {
+    return { error: "Recording is too large (25MB max)." };
+  }
+
   const ext = mimeType.includes("mp4")
     ? "mp4"
     : mimeType.includes("ogg")
       ? "ogg"
       : "webm";
-  const buffer = Buffer.from(await file.arrayBuffer());
-
-  // Persist the raw recording first so a transcription failure never loses it.
-  const storagePath = `${user.id}/${sessionId}/answers/${questionId}-${Date.now()}.${ext}`;
-  const { error: uploadError } = await supabase.storage
-    .from(AUDIO_BUCKET)
-    .upload(storagePath, buffer, { contentType: mimeType });
-  if (uploadError) return { error: uploadError.message };
+  const buffer = Buffer.from(await blob.arrayBuffer());
 
   let transcript = "";
   try {

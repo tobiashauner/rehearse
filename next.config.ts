@@ -3,9 +3,11 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   serverExternalPackages: ["unpdf", "mammoth"],
   experimental: {
-    // Spoken answers post their audio recording through a server action;
-    // the default 1MB body limit is far too small for a few minutes of audio.
-    serverActions: { bodySizeLimit: "25mb" },
+    // Spoken answers now upload straight to Supabase Storage from the browser,
+    // so no large body flows through a Server Action. The remaining upload
+    // path (resume/document import) stays well under Vercel's hard 4.5MB
+    // Server Action body cap, which no config value here can raise.
+    serverActions: { bodySizeLimit: "4mb" },
   },
 };
 

@@ -23,6 +23,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Spinner } from "@/components/ui/spinner";
 import { AudioVisualizer } from "@/components/interview/audio-visualizer";
 import { useRecorder } from "@/hooks/use-recorder";
+import { createClient } from "@/lib/supabase/client";
 import type { AnswerEvaluation } from "@/lib/prompts/answer-evaluation";
 import {
   startInterview,
@@ -187,22 +188,36 @@ export function InterviewRunner({
       return;
     }
     setPhase("evaluating");
-    const formData = new FormData();
-    formData.append(
-      "file",
-      new File(
-        [recording.blob],
-        `answer.${recordingExtension(recording.mimeType)}`,
-        { type: recording.mimeType },
-      ),
-    );
-    formData.append("durationSeconds", String(recording.durationSeconds));
-    const result = await submitAudioAnswer(
-      projectId,
-      sessionId,
-      question.id,
-      formData,
-    );
+
+    // Upload straight to storage from the browser — Vercel rejects Server
+    // Action bodies over 4.5MB, so the recording never routes through one.
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      toast.error("Your session expired — please sign in again.");
+      setPhase("answering");
+      return;
+    }
+    const ext = recordingExtension(recording.mimeType);
+    const storagePath = `${user.id}/${sessionId}/answers/${question.id}-${Date.now()}.${ext}`;
+    const { error: uploadError } = await supabase.storage
+      .from("interview-audio")
+      .upload(storagePath, recording.blob, {
+        contentType: recording.mimeType,
+      });
+    if (uploadError) {
+      toast.error("We couldn't upload your recording — please try again.");
+      setPhase("answering");
+      return;
+    }
+
+    const result = await submitAudioAnswer(projectId, sessionId, question.id, {
+      storagePath,
+      mimeType: recording.mimeType,
+      durationSeconds: recording.durationSeconds,
+    });
     if (result.error) {
       toast.error(result.error);
       setPhase("answering");
