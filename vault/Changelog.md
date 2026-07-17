@@ -20,6 +20,12 @@ diff.
   vignette + animated waveform, 3-step sequence, personality/follow-up section, drenched
   petrol "Coaching, not testing." band with score-trend chart, final CTA. Verified with
   desktop/mobile screenshots, zero horizontal overflow, clean tsc/eslint.
+- Same-day refinement: auth now happens **in place on the landing** — every CTA opens a
+  Base UI popover ("Sign in" → sign-in mode, "Start rehearsing" → sign-up mode) instead
+  of routing to `/login`. The form was extracted to `components/auth/auth-form.tsx`,
+  shared by the popover and the (still existing) `/login` page, which remains the
+  redirect target for unauthenticated deep links. Verified end-to-end: confirmed test
+  user signed in through the popover and landed on the app home; popover fits at 390px.
 
 ## 2026-07-09 — Project section rail + summary-tile overview
 

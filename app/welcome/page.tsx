@@ -5,6 +5,7 @@ import { ArrowRight, Check, Mic } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { AuthPopover } from "@/components/welcome/auth-popover";
 import "./welcome.css";
 
 export const metadata: Metadata = {
@@ -49,18 +50,20 @@ export default function WelcomePage() {
           className="h-10 w-auto shrink-0"
         />
         <nav className="flex items-center gap-2">
-          <Link
-            href="/login"
+          <AuthPopover
+            initialMode="sign-in"
+            align="end"
             className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
           >
             Sign in
-          </Link>
-          <Link
-            href="/login"
+          </AuthPopover>
+          <AuthPopover
+            initialMode="sign-up"
+            align="end"
             className={cn(buttonVariants({ size: "sm" }), "max-sm:hidden")}
           >
             Start rehearsing
-          </Link>
+          </AuthPopover>
         </nav>
       </header>
 
@@ -87,13 +90,14 @@ export default function WelcomePage() {
               className="welcome-rise mt-9 flex flex-wrap items-center gap-3"
               style={{ "--rise-delay": "0.16s" } as React.CSSProperties}
             >
-              <Link
-                href="/login"
+              <AuthPopover
+                initialMode="sign-up"
+                align="start"
                 className={cn(buttonVariants({ size: "lg" }), "px-6")}
               >
                 Start rehearsing
                 <ArrowRight data-icon="inline-end" />
-              </Link>
+              </AuthPopover>
               <p className="text-sm text-muted-foreground">
                 Your materials, your questions — no fixed question bank.
               </p>
@@ -335,13 +339,13 @@ export default function WelcomePage() {
             question is ready as soon as your resume is.
           </p>
           <div className="mt-8 flex justify-center">
-            <Link
-              href="/login"
+            <AuthPopover
+              initialMode="sign-up"
               className={cn(buttonVariants({ size: "lg" }), "px-7")}
             >
               Start rehearsing
               <ArrowRight data-icon="inline-end" />
-            </Link>
+            </AuthPopover>
           </div>
         </section>
       </main>
