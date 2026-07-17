@@ -4,6 +4,23 @@ Dated log of actual work sessions on this app. Add a new entry at the end of eac
 that changes the app (newest at top). Keep entries short — what changed and why, not a
 diff.
 
+## 2026-07-16 — GitHub remote, Vercel deploy prep, public landing page
+
+- First push to GitHub (`tobiashauner/rehearse`, `main`); PAT stored in macOS Keychain
+  for pushes going forward. `.claude/settings.local.json` and `.impeccable/` gitignored.
+- Vercel-readiness fix: voice answers now upload **direct to Supabase Storage from the
+  browser** instead of through a server action — Vercel hard-caps action bodies at
+  4.5MB, which a few minutes of audio exceeds. See
+  [[Decisions/0021-direct-to-storage-audio-upload|0021]]. `bodySizeLimit` 25mb → 4mb.
+  Known residual: `uploadFileResource` still streams through an action (fine under
+  ~4MB resumes).
+- New public marketing landing at `/` for signed-out visitors
+  (`app/welcome/page.tsx`, middleware rewrite — see
+  [[Decisions/0022-public-landing-via-middleware-rewrite|0022]]): hero with live-session
+  vignette + animated waveform, 3-step sequence, personality/follow-up section, drenched
+  petrol "Coaching, not testing." band with score-trend chart, final CTA. Verified with
+  desktop/mobile screenshots, zero horizontal overflow, clean tsc/eslint.
+
 ## 2026-07-09 — Project section rail + summary-tile overview
 
 Third IA pass, refining the previous one after use — see

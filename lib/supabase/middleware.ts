@@ -41,13 +41,26 @@ export async function updateSession(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
 
-  if (!user && pathname !== "/login") {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    return NextResponse.redirect(url);
+  if (!user) {
+    // Signed-out visitors see the marketing page at "/" — a rewrite, not a
+    // redirect, so the public URL stays clean.
+    if (pathname === "/") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/welcome";
+      const rewritten = NextResponse.rewrite(url, { request });
+      supabaseResponse.cookies
+        .getAll()
+        .forEach((cookie) => rewritten.cookies.set(cookie));
+      return rewritten;
+    }
+    if (pathname !== "/login" && pathname !== "/welcome") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      return NextResponse.redirect(url);
+    }
   }
 
-  if (user && pathname === "/login") {
+  if (user && (pathname === "/login" || pathname === "/welcome")) {
     const url = request.nextUrl.clone();
     url.pathname = "/";
     return NextResponse.redirect(url);

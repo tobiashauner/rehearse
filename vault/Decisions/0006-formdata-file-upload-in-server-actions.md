@@ -1,7 +1,13 @@
 ---
 date: 2026-07-03
-status: accepted
+status: partially superseded by 0021
 ---
+
+> [!note] Superseded in part (2026-07-16)
+> Interview **audio** no longer uses this pattern — Vercel caps Server Action bodies at
+> 4.5MB, so recordings upload direct to storage instead. See
+> [[Decisions/0021-direct-to-storage-audio-upload|0021]]. This pattern remains correct
+> for small files (resume/document uploads).
 
 # 0006 — File uploads pass `FormData` directly to server actions, not JSON
 
