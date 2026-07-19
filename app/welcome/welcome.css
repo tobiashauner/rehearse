@@ -20,30 +20,8 @@
   animation-delay: var(--rise-delay, 0s);
 }
 
-/* Ambient "listening" loop on the hero waveform bars. Each bar's height is
- * set inline; the loop only breathes scaleY around it. */
-@keyframes welcome-listen {
-  0%,
-  100% {
-    transform: scaleY(0.55);
-  }
-  50% {
-    transform: scaleY(1);
-  }
-}
-
-.welcome-bar {
-  transform-origin: center;
-  animation: welcome-listen 1.6s ease-in-out infinite;
-  animation-delay: var(--bar-delay, 0s);
-}
-
 @media (prefers-reduced-motion: reduce) {
   .welcome-rise {
     animation: none;
-  }
-  .welcome-bar {
-    animation: none;
-    transform: scaleY(0.8);
   }
 }

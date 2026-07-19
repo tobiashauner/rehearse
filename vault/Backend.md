@@ -26,6 +26,16 @@ last-verified: 2026-07-03
   migration or CLI. Flagged in [[Roadmap]].
 - Email confirmation: using whatever the hosted project's default is (likely "on"). The
   signup server action handles both cases (see [[Auth-Flow]]).
+- Auth URL config (2026-07-18): hosted `site_url` is `https://walkinrehearsed.com`
+  (production domain on Vercel, project `hauner-labs/rehearse`); redirect allow-list also
+  covers `www.` plus `localhost:3000` / `127.0.0.1:3000` for local dev. This is hosted
+  project config, **not** `supabase/config.toml` (that file only drives a local stack) —
+  it was set via the Management API (`PATCH /v1/projects/<ref>/config/auth`, authed with
+  the Supabase CLI token from the macOS Keychain, service name "Supabase CLI"). Before
+  this, `site_url` was the default `http://localhost:3000`, so confirmation/invite email
+  links redirected to localhost. Emails sent **before** the change still carry the old
+  `redirect_to` — re-send those invites. Note: no in-app set-password flow exists for
+  invited users yet (see [[Auth-Flow]] "What's not built").
 
 ## Database
 

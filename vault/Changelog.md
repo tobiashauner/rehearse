@@ -4,6 +4,52 @@ Dated log of actual work sessions on this app. Add a new entry at the end of eac
 that changes the app (newest at top). Keep entries short — what changed and why, not a
 diff.
 
+## 2026-07-18 — Illustrated landing page (Workable-style, brand colors)
+
+- Final same-day pivot: hand-drawn characters replaced with **unDraw illustrations**
+  (undraw.co), downloaded and recolored to the brand palette via hex substitution —
+  petrol accent + selective amber warmth. Files in `public/illustrations/`;
+  `components/welcome/illustrations.tsx` deleted; coaching-band overlay figure dropped.
+  Fetch/recolor recipe in [[Decisions/0023-illustrated-landing|0023]].
+- Same-day follow-ups: (1) header logo restored to the real mark —
+  `rehearse_logo_dark.svg` turned out to be an old lockup, so a
+  `rehearse_logo_white.svg` (byte-identical art, white wordmark) was created for the
+  petrol hero, and the footer swapped from old `logo-icon.svg` to the actual
+  `rehearse_logo.svg` (the two old-lockup files are now unused). (2) Every character
+  redrawn with a more realistic grammar — distinct necks/collars, profile faces with
+  nose + features, connected tapered limbs — see [[Decisions/0023-illustrated-landing|0023]].
+
+- Landing redesigned to be illustration-led per Tobias's request ("way less generic,
+  human and approachable, like Workable"): petrol-drenched hero (nav included, white
+  logo variant) with a hand-drawn flat scene of a candidate rehearsing out loud at a
+  desk; organic curved dividers between bands; the three "how it works" steps now carry
+  illustrated vignettes; an interviewer-character trio above "An interviewer, not a
+  question bank"; a coach seated on the score card's edge in the petrol band; final CTA
+  literalizes the tagline with a figure walking through an open amber door.
+- All scenes are hand-authored SVG React components in
+  `components/welcome/illustrations.tsx` — one shared palette (petrol/amber/brick +
+  varied skin tones) and character grammar (faceless flat figures, rounded stroke
+  limbs), `role="presentation"`. Sparse geometric accents (dots/rings/triangles) are
+  deliberate print-shop texture, kept well short of confetti-gamification (the
+  DESIGN.md ban was consciously relaxed for this marketing surface only, at the user's
+  explicit request for the Workable look).
+- Hero waveform reuses the existing `.welcome-bar` ambient loop (now with
+  `transform-box: fill-box` for SVG); `welcome-rise` entrance kept;
+  `prefers-reduced-motion` still disables both. Product-true content retained: the
+  personality-chips/follow-up card and the session-scores chart.
+- Verified: desktop + mobile full-page screenshots, zoomed section shots, auth popover
+  over the petrol hero, clean `tsc` + eslint. (`pnpm build` not run — dev server was
+  up; run it before deploying.)
+
+## 2026-07-18 — Fixed invite/confirmation emails linking to localhost
+
+- Hosted Supabase `site_url` was still the default `http://localhost:3000`, so auth
+  email links (invites, signup confirmations) redirected to localhost. Set it to
+  `https://walkinrehearsed.com` (the production domain, per Tobias) via the Management
+  API, with a redirect allow-list covering www + localhost for dev — details in
+  [[Backend]] "Auth". Config-only change, no code touched. Invites sent before the fix
+  still have localhost baked into their links and must be re-sent.
+
 ## 2026-07-16 — GitHub remote, Vercel deploy prep, public landing page
 
 - First push to GitHub (`tobiashauner/rehearse`, `main`); PAT stored in macOS Keychain
