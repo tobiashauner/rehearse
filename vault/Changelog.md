@@ -6,6 +6,14 @@ diff.
 
 ## 2026-07-19 — Clarified "one project per application" + favicon
 
+- Fixed a standing `DialogFooter` layout bug (`components/ui/dialog.tsx`): the footer
+  was `sticky bottom-0` inside the padded, scrollable `DialogContent`, which pins
+  against the content-box edge — 24px above the dialog's true bottom — so the
+  half-transparent band rode up over the form and left a white strip below. Now a
+  normal in-flow band (negative margins keep it flush); it scrolls with long content
+  instead of pinning. Affected all three dialogs (new project, add resource,
+  configure interview); verified at fitting and overflowing viewport heights.
+
 - The project-per-application mental model is now stated on all three creation
   surfaces: the New Project dialog gained a `DialogDescription` ("One project per
   application — it holds the role, the company, your materials…") plus example

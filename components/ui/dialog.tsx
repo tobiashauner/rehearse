@@ -102,7 +102,11 @@ function DialogFooter({
     <div
       data-slot="dialog-footer"
       className={cn(
-        "sticky bottom-0 -mx-6 -mb-6 flex flex-col-reverse gap-2 rounded-b-xl border-t bg-muted/50 p-6 sm:flex-row sm:justify-end",
+        // In flow, not sticky: sticky inside the padded, scrollable
+        // DialogContent pins against the content-box edge and rides up over
+        // the form (24px short of the dialog's true bottom). The negative
+        // margins keep the band flush with the dialog's edges instead.
+        "-mx-6 -mb-6 flex flex-col-reverse gap-2 rounded-b-xl border-t bg-muted/50 p-6 sm:flex-row sm:justify-end",
         className
       )}
       {...props}
