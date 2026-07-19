@@ -4,6 +4,16 @@ Dated log of actual work sessions on this app. Add a new entry at the end of eac
 that changes the app (newest at top). Keep entries short — what changed and why, not a
 diff.
 
+## 2026-07-19 — Per-user AI spend cap (metering + monthly budget)
+
+- New `ai_usage_events` ledger + `lib/ai/usage.ts` (pricing, cost calc, budget
+  check); all 8 OpenAI call sites metered; AI actions blocked past the monthly cap
+  ($2 default via `AI_MONTHLY_LIMIT_CENTS`) with a calm, non-punishing message.
+  Groundwork for paid tiers: only `monthlyLimitCents()` needs plan-awareness. Details
+  in [[Backend]] "AI spend cap". Verified end-to-end: real briefing metered at 0.39¢
+  (token counts × verified prices), over-cap regenerate blocked in UI, ledger
+  delete/negative-insert rejected by RLS + check constraint.
+
 ## 2026-07-19 — Clarified "one project per application" + favicon
 
 - Fixed a standing `DialogFooter` layout bug (`components/ui/dialog.tsx`): the footer

@@ -37,6 +37,23 @@ last-verified: 2026-07-03
   `redirect_to` — re-send those invites. Note: no in-app set-password flow exists for
   invited users yet (see [[Auth-Flow]] "What's not built").
 
+## AI spend cap
+
+- Every OpenAI call (6 chat sites, TTS, STT) is metered into [[Database-Schema]]'s
+  `ai_usage_events` and every AI-triggering server action first calls
+  `checkAiBudget()` (`lib/ai/usage.ts`) against the caller's current-calendar-month
+  spend. Limit: `AI_MONTHLY_LIMIT_CENTS` env (default 200 = $2/user/month). Account
+  tiers (free/basic/max) later plug into `monthlyLimitCents()` — that's the only
+  function that needs to become plan-aware.
+- Pricing table lives in `lib/ai/usage.ts` (verified 2026-07-19: gpt-5.4-mini
+  $0.75/$4.50 per 1M in/out; TTS ≈ $0.02/1K chars; STT ≈ $0.003/min). Unknown chat
+  models fall back to deliberately HIGH prices so we never under-meter.
+- Postures: budget check fails **open** (transient DB error must not brick the app;
+  exposure bounded by one action), usage recording failures log but never break the
+  action, and the end-of-session summary is metered but **not** gated (a session you
+  were allowed to run always gets its debrief). Blocked actions return
+  `AI_LIMIT_MESSAGE` through the existing `{ error }` channel.
+
 ## Database
 
 See [[Database-Schema]] for the full table/enum/RLS reference. Summary: 7 tables, all

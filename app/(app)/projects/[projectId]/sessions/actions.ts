@@ -25,6 +25,12 @@ import type { SessionSummary } from "@/lib/prompts/session-summary";
 import { configureInterviewSchema } from "@/lib/validations/session";
 import { createClient } from "@/lib/supabase/server";
 import {
+  AI_LIMIT_MESSAGE,
+  chatCostCents,
+  checkAiBudget,
+  recordAiUsage,
+} from "@/lib/ai/usage";
+import {
   extractTextFromBuffer,
   mimeTypeFromName,
 } from "@/lib/resources/extract-text";
@@ -91,7 +97,7 @@ async function backfillResourceContent(
 
 export async function generateProjectAnalysis(projectId: string) {
   const supabase = await createClient();
-  await requireUser(supabase);
+  const user = await requireUser(supabase);
 
   const { data: project } = await supabase
     .from("projects")
@@ -115,6 +121,11 @@ export async function generateProjectAnalysis(projectId: string) {
   // uploaded before extraction existed) so their content feeds the briefing.
   await backfillResourceContent(supabase, resources);
 
+  const budget = await checkAiBudget(supabase, user.id);
+  if (!budget.allowed) {
+    return { error: AI_LIMIT_MESSAGE };
+  }
+
   const messages = buildProjectAnalysisMessages({ project, resources });
 
   let parsed: ProjectAnalysis | null | undefined;
@@ -123,6 +134,14 @@ export async function generateProjectAnalysis(projectId: string) {
       model: OPENAI_MODEL,
       messages,
       response_format: zodResponseFormat(projectAnalysisSchema, "project_analysis"),
+    });
+    await recordAiUsage(supabase, {
+      userId: user.id,
+      kind: "briefing",
+      model: OPENAI_MODEL,
+      inputTokens: completion.usage?.prompt_tokens,
+      outputTokens: completion.usage?.completion_tokens,
+      costCents: chatCostCents(OPENAI_MODEL, completion.usage),
     });
     const message = completion.choices[0]?.message;
     if (message?.refusal) {
@@ -247,7 +266,7 @@ async function loadPastPerformance(
 
 export async function generateCoachingPlan(projectId: string) {
   const supabase = await createClient();
-  await requireUser(supabase);
+  const user = await requireUser(supabase);
 
   const { data: project } = await supabase
     .from("projects")
@@ -263,12 +282,25 @@ export async function generateCoachingPlan(projectId: string) {
     return { error: "Complete an interview first — the plan is built from your results." };
   }
 
+  const budget = await checkAiBudget(supabase, user.id);
+  if (!budget.allowed) {
+    return { error: AI_LIMIT_MESSAGE };
+  }
+
   let parsed: CoachingPlan | null | undefined;
   try {
     const completion = await getOpenAIClient().chat.completions.parse({
       model: OPENAI_MODEL,
       messages: buildCoachingPlanMessages({ project, sessions }),
       response_format: zodResponseFormat(coachingPlanSchema, "coaching_plan"),
+    });
+    await recordAiUsage(supabase, {
+      userId: user.id,
+      kind: "coaching",
+      model: OPENAI_MODEL,
+      inputTokens: completion.usage?.prompt_tokens,
+      outputTokens: completion.usage?.completion_tokens,
+      costCents: chatCostCents(OPENAI_MODEL, completion.usage),
     });
     const message = completion.choices[0]?.message;
     if (message?.refusal) {
@@ -312,7 +344,7 @@ export async function createInterviewSession(
   }
 
   const supabase = await createClient();
-  await requireUser(supabase);
+  const user = await requireUser(supabase);
 
   const { data: project } = await supabase
     .from("projects")
@@ -362,6 +394,11 @@ export async function createInterviewSession(
     pastPerformance,
   });
 
+  const budget = await checkAiBudget(supabase, user.id);
+  if (!budget.allowed) {
+    return { error: AI_LIMIT_MESSAGE };
+  }
+
   let generated;
   try {
     const completion = await getOpenAIClient().chat.completions.parse({
@@ -371,6 +408,14 @@ export async function createInterviewSession(
         questionGenerationResultSchema,
         "question_generation",
       ),
+    });
+    await recordAiUsage(supabase, {
+      userId: user.id,
+      kind: "questions",
+      model: OPENAI_MODEL,
+      inputTokens: completion.usage?.prompt_tokens,
+      outputTokens: completion.usage?.completion_tokens,
+      costCents: chatCostCents(OPENAI_MODEL, completion.usage),
     });
     const message = completion.choices[0]?.message;
     if (message?.refusal) {

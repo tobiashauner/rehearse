@@ -30,6 +30,14 @@ import {
   MAX_ANSWER_AUDIO_BYTES,
 } from "@/lib/validations/session";
 import { createClient } from "@/lib/supabase/server";
+import {
+  AI_LIMIT_MESSAGE,
+  chatCostCents,
+  checkAiBudget,
+  recordAiUsage,
+  sttCostCents,
+  ttsCostCents,
+} from "@/lib/ai/usage";
 
 // Follow-up questions are inserted with order_index >= this base, so they're
 // distinguishable from the pre-generated originals (0..N-1) without a schema
@@ -247,6 +255,12 @@ export async function getQuestionAudio(
     if (signed?.signedUrl) return { url: signed.signedUrl };
   }
 
+  // Only generating fresh audio spends tokens — cached playback above is free.
+  const budget = await checkAiBudget(supabase, user.id);
+  if (!budget.allowed) {
+    return { error: AI_LIMIT_MESSAGE };
+  }
+
   try {
     const style = PERSONALITY_TTS_STYLE[session.interviewer_personality];
     const speech = await getOpenAIClient().audio.speech.create({
@@ -254,6 +268,12 @@ export async function getQuestionAudio(
       voice: OPENAI_TTS_VOICE,
       input: question.question,
       instructions: `You are a job interviewer asking the candidate a question out loud.${style ? ` ${style}` : ""}`,
+    });
+    await recordAiUsage(supabase, {
+      userId: user.id,
+      kind: "tts",
+      model: OPENAI_TTS_MODEL,
+      costCents: ttsCostCents(question.question.length),
     });
     const buffer = Buffer.from(await speech.arrayBuffer());
 
@@ -288,7 +308,7 @@ export async function submitTextAnswer(
   text: string,
 ) {
   const supabase = await createClient();
-  await requireUser(supabase);
+  const user = await requireUser(supabase);
 
   const session = await loadSession(supabase, projectId, sessionId);
   if (!session) return { error: "Session not found." };
@@ -297,7 +317,18 @@ export async function submitTextAnswer(
   const question = questions.find((q) => q.id === questionId);
   if (!question) return { error: "Question not found." };
 
-  return processAnswer(supabase, projectId, session, question, questions, text);
+  const budget = await checkAiBudget(supabase, user.id);
+  if (!budget.allowed) return { error: AI_LIMIT_MESSAGE };
+
+  return processAnswer(
+    supabase,
+    user.id,
+    projectId,
+    session,
+    question,
+    questions,
+    text,
+  );
 }
 
 /**
@@ -336,6 +367,11 @@ export async function submitAudioAnswer(
   const question = questions.find((q) => q.id === questionId);
   if (!question) return { error: "Question not found." };
 
+  // Checked before the STT + evaluation spend; the uploaded recording stays
+  // in storage either way, so nothing the user said is lost.
+  const budget = await checkAiBudget(supabase, user.id);
+  if (!budget.allowed) return { error: AI_LIMIT_MESSAGE };
+
   // Pull the recording back down to transcribe it. This server→storage fetch
   // isn't an inbound request body, so the Server Action size limit never bites.
   const { data: blob, error: downloadError } = await supabase.storage
@@ -369,6 +405,12 @@ export async function submitAudioAnswer(
       model: OPENAI_STT_MODEL,
       file: await toFile(buffer, `answer.${ext}`, { type: mimeType }),
     });
+    await recordAiUsage(supabase, {
+      userId: user.id,
+      kind: "stt",
+      model: OPENAI_STT_MODEL,
+      costCents: sttCostCents(durationSeconds),
+    });
     transcript = result.text?.trim() ?? "";
   } catch (err) {
     console.error("answer transcription failed", err);
@@ -386,6 +428,7 @@ export async function submitAudioAnswer(
 
   const result = await processAnswer(
     supabase,
+    user.id,
     projectId,
     session,
     question,
@@ -403,6 +446,7 @@ export async function submitAudioAnswer(
  */
 async function processAnswer(
   supabase: SupabaseServerClient,
+  userId: string,
   projectId: string,
   session: SessionRow,
   question: QuestionRow,
@@ -456,6 +500,14 @@ async function processAnswer(
       }),
       response_format: zodResponseFormat(answerEvaluationSchema, "answer_evaluation"),
     });
+    await recordAiUsage(supabase, {
+      userId,
+      kind: "evaluation",
+      model: OPENAI_MODEL,
+      inputTokens: completion.usage?.prompt_tokens,
+      outputTokens: completion.usage?.completion_tokens,
+      costCents: chatCostCents(OPENAI_MODEL, completion.usage),
+    });
     evaluation = completion.choices[0]?.message?.parsed ?? null;
   } catch (err) {
     console.error("answer evaluation failed", err);
@@ -494,6 +546,14 @@ async function processAnswer(
           "follow_up_generation",
         ),
       });
+      await recordAiUsage(supabase, {
+        userId,
+        kind: "followup",
+        model: OPENAI_MODEL,
+        inputTokens: completion.usage?.prompt_tokens,
+        outputTokens: completion.usage?.completion_tokens,
+        costCents: chatCostCents(OPENAI_MODEL, completion.usage),
+      });
       const followUp = completion.choices[0]?.message?.parsed;
       if (followUp?.shouldFollowUp && followUp.question) {
         const existingFollowUps = questions.filter(
@@ -531,7 +591,7 @@ async function processAnswer(
 
 export async function completeInterview(projectId: string, sessionId: string) {
   const supabase = await createClient();
-  await requireUser(supabase);
+  const user = await requireUser(supabase);
 
   const session = await loadSession(supabase, projectId, sessionId);
   if (!session) return { error: "Session not found." };
@@ -554,7 +614,7 @@ export async function completeInterview(projectId: string, sessionId: string) {
     })
     .eq("id", sessionId);
 
-  await generateSessionSummary(supabase, projectId, sessionId);
+  await generateSessionSummary(supabase, user.id, projectId, sessionId);
 
   revalidatePath(`/projects/${projectId}/sessions/${sessionId}`);
   revalidatePath(`/projects/${projectId}/sessions/${sessionId}/review`);
@@ -571,7 +631,7 @@ export async function ensureSessionSummary(
   sessionId: string,
 ) {
   const supabase = await createClient();
-  await requireUser(supabase);
+  const user = await requireUser(supabase);
 
   const { data } = await supabase
     .from("interview_sessions")
@@ -581,7 +641,7 @@ export async function ensureSessionSummary(
     .single();
   if (!data || data.status !== "completed" || data.summary) return;
 
-  const ok = await generateSessionSummary(supabase, projectId, sessionId);
+  const ok = await generateSessionSummary(supabase, user.id, projectId, sessionId);
   if (ok) {
     revalidatePath(`/projects/${projectId}/sessions/${sessionId}/review`);
   }
@@ -591,9 +651,16 @@ export async function ensureSessionSummary(
  * Build and persist the end-of-session summary + overall score. Internal (a
  * server client isn't a serializable server-action arg); callers go through
  * completeInterview or ensureSessionSummary.
+ *
+ * Deliberately NOT budget-gated: a session the user was allowed to run should
+ * always get its debrief, even if the final answer tipped them over the cap —
+ * otherwise completed sessions would be stuck summary-less until next month
+ * (and ensureSessionSummary would retry on every review view). The one call
+ * is still metered.
  */
 async function generateSessionSummary(
   supabase: SupabaseServerClient,
+  userId: string,
   projectId: string,
   sessionId: string,
 ): Promise<boolean> {
@@ -656,6 +723,14 @@ async function generateSessionSummary(
         transcript,
       }),
       response_format: zodResponseFormat(sessionSummarySchema, "session_summary"),
+    });
+    await recordAiUsage(supabase, {
+      userId,
+      kind: "summary",
+      model: OPENAI_MODEL,
+      inputTokens: completion.usage?.prompt_tokens,
+      outputTokens: completion.usage?.completion_tokens,
+      costCents: chatCostCents(OPENAI_MODEL, completion.usage),
     });
     const summary = completion.choices[0]?.message?.parsed;
     if (!summary) return false;

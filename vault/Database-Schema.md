@@ -116,6 +116,17 @@ future answer-insert code must handle it explicitly or `is_current` will be wron
 current text-mode flow inserts one answer per question at `version` 1 / `is_current` true;
 the re-answer UI isn't built yet.)
 
+### `ai_usage_events` (migration `20260719152619_ai_usage_events.sql`)
+`id, user_id (→ auth.users, cascade), kind (text check: briefing|questions|followup|
+evaluation|summary|coaching|tts|stt), model, input_tokens, output_tokens,
+cost_cents (numeric 12,6, check >= 0), created_at`
+The AI spend ledger — one row per OpenAI call, cost computed at write time by
+`lib/ai/usage.ts`. **Unlike every other table, RLS is NOT `for all`:** select-own +
+insert-own only — no update/delete policies, so a user cannot reset their own spend.
+The `>= 0` check blocks negative "refund" inserts. `user_id` is direct (not via
+projects) because usage outlives any one project. Indexed `(user_id, created_at desc)`
+for the monthly-sum budget check.
+
 ## Storage buckets
 
 All private. RLS keys off path prefix, not a DB join:

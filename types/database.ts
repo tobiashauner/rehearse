@@ -68,6 +68,39 @@ export type Database = {
           },
         ]
       }
+      ai_usage_events: {
+        Row: {
+          cost_cents: number
+          created_at: string
+          id: string
+          input_tokens: number | null
+          kind: string
+          model: string
+          output_tokens: number | null
+          user_id: string
+        }
+        Insert: {
+          cost_cents: number
+          created_at?: string
+          id?: string
+          input_tokens?: number | null
+          kind: string
+          model: string
+          output_tokens?: number | null
+          user_id: string
+        }
+        Update: {
+          cost_cents?: number
+          created_at?: string
+          id?: string
+          input_tokens?: number | null
+          kind?: string
+          model?: string
+          output_tokens?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       answers: {
         Row: {
           audio_storage_path: string | null
