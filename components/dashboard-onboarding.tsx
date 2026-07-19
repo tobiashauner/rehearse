@@ -28,8 +28,8 @@ export function DashboardOnboarding() {
       <div className="space-y-1">
         <h1 className="text-3xl font-medium">Welcome to Rehearse</h1>
         <p className="max-w-prose text-muted-foreground">
-          This page becomes your projects — one for each job you&apos;re going
-          after, each tracking your practice for it.
+          Rehearse organizes your prep into projects — one per application, a
+          specific role at a specific company. This page becomes that list.
         </p>
       </div>
 
@@ -39,11 +39,12 @@ export function DashboardOnboarding() {
             <div className="space-y-2">
               <h2 className="text-lg font-medium">Start with a project</h2>
               <p className="max-w-prose text-sm leading-relaxed text-muted-foreground">
-                A project gathers everything for one job you&apos;re going
-                after — your resume, the job description, your notes on the
-                company. Rehearse turns those into mock interviews that ask
-                what this interviewer actually would, and gives you structured
-                feedback on every answer.
+                A project gathers everything for one application — the role,
+                the company, your resume, the job description, your notes.
+                Rehearse turns those into mock interviews that ask what this
+                interviewer actually would, and gives you structured feedback
+                on every answer. Interviewing at three companies? Make three
+                projects.
               </p>
             </div>
             <CreateProjectDialog triggerLabel="Create your first project" />

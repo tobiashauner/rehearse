@@ -103,7 +103,8 @@ export default async function HomePage() {
         <div className="space-y-1">
           <h1 className="text-3xl font-medium">Projects</h1>
           <p className="text-muted-foreground">
-            One project per job you&apos;re going after.
+            One project per application — a role at a company you&apos;re going
+            after.
           </p>
         </div>
         <CreateProjectDialog triggerVariant={resumable ? "outline" : "default"} />

@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -56,22 +57,38 @@ export function CreateProjectDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>New Project</DialogTitle>
+          <DialogDescription>
+            One project per application — it holds the role, the company, your
+            materials, and every practice session for that interview.
+          </DialogDescription>
         </DialogHeader>
         <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
           <div className="space-y-2">
             <Label htmlFor="title">Title</Label>
-            <Input id="title" {...register("title")} />
+            <Input
+              id="title"
+              placeholder="e.g., Senior PM at Stripe"
+              {...register("title")}
+            />
             {errors.title && (
               <p className="text-sm text-destructive">{errors.title.message}</p>
             )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="company">Company</Label>
-            <Input id="company" {...register("company")} />
+            <Input
+              id="company"
+              placeholder="e.g., Stripe"
+              {...register("company")}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="role">Role</Label>
-            <Input id="role" {...register("role")} />
+            <Input
+              id="role"
+              placeholder="e.g., Senior Product Manager"
+              {...register("role")}
+            />
           </div>
           {formError && (
             <p className="text-sm text-destructive">{formError}</p>

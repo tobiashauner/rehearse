@@ -4,6 +4,21 @@ Dated log of actual work sessions on this app. Add a new entry at the end of eac
 that changes the app (newest at top). Keep entries short — what changed and why, not a
 diff.
 
+## 2026-07-19 — Clarified "one project per application" + favicon
+
+- The project-per-application mental model is now stated on all three creation
+  surfaces: the New Project dialog gained a `DialogDescription` ("One project per
+  application — it holds the role, the company, your materials…") plus example
+  placeholders on Title/Company/Role; the Projects page subtitle and the first-run
+  onboarding copy both say "one per application — a role at a company" (onboarding
+  adds "Interviewing at three companies? Make three projects."). Verified signed-in
+  with a throwaway confirmed user (deleted after).
+- Favicon added from the real logo mark: `app/icon.svg` (auto-served by App Router),
+  `app/apple-icon.png` (180² render on white), and `app/favicon.ico` (16/32/48
+  PNG-packed ICO — Safari doesn't render SVG favicons). ICO was hand-packed in a
+  scratch script (Playwright renders + ICONDIR header); browsers cache favicons hard,
+  so a fresh tab / direct hit on /favicon.ico may be needed to see it.
+
 ## 2026-07-18 — Illustrated landing page (Workable-style, brand colors)
 
 - Final same-day pivot: hand-drawn characters replaced with **unDraw illustrations**
