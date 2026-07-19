@@ -4,6 +4,19 @@ Dated log of actual work sessions on this app. Add a new entry at the end of eac
 that changes the app (newest at top). Keep entries short — what changed and why, not a
 diff.
 
+## 2026-07-19 — Branded auth emails: blocked on custom SMTP (Resend chosen)
+
+- Wrote branded HTML templates + subjects for all five auth emails (confirmation,
+  invite, magic link, recovery, email change) — calm copy, text wordmark, amber CTA,
+  no "Supabase" in the visible content. **Supabase free tier refuses template edits
+  on the built-in mailer** (400: "configure a custom SMTP provider"), which is also
+  why the sender shows "Supabase Auth". Tobias chose Resend; DNS is on Vercel
+  nameservers, so the verification records go in Vercel → Domains → DNS. Waiting on:
+  Resend account + domain verification + API key. Then: PATCH `smtp_*` auth config
+  (host smtp.resend.com, port 465, user "resend", pass = API key, sender e.g.
+  hello@walkinrehearsed.com) and run `scripts/apply-auth-email-templates.mjs`
+  (reads the Supabase CLI token from the macOS Keychain).
+
 ## 2026-07-19 — Per-user AI spend cap (metering + monthly budget)
 
 - New `ai_usage_events` ledger + `lib/ai/usage.ts` (pricing, cost calc, budget
