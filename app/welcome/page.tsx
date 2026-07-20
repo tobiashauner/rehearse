@@ -55,8 +55,9 @@ function Curve({ flip = false }: { flip?: boolean }) {
 export default function WelcomePage() {
   return (
     <div className="flex min-h-svh flex-col">
-      {/* ————— Petrol-drenched hero, nav included ————— */}
-      <div className="bg-[oklch(0.40_0.12_200)] text-white">
+      {/* ————— Petrol-drenched hero, nav included; deep petrol lightens
+           toward the illustration on the right ————— */}
+      <div className="bg-[linear-gradient(90deg,oklch(0.36_0.125_205),oklch(0.40_0.12_200)_45%,oklch(0.50_0.11_196))] text-white">
         <header className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-6">
           <Image
             src="/rehearse_logo_white.svg"
@@ -139,8 +140,6 @@ export default function WelcomePage() {
             />
           </div>
         </section>
-      </div>
-      <div className="-mt-px bg-[oklch(0.40_0.12_200)]">
         <Curve />
       </div>
 
