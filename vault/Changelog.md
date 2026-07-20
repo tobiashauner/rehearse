@@ -4,6 +4,19 @@ Dated log of actual work sessions on this app. Add a new entry at the end of eac
 that changes the app (newest at top). Keep entries short — what changed and why, not a
 diff.
 
+## 2026-07-20 — Branded auth emails live (Resend SMTP wired)
+
+- Resend account created by Tobias (send-only API key; domain walkinrehearsed.com
+  verified via Vercel DNS). Auth SMTP configured via Management API: host
+  smtp.resend.com:465, user "resend", sender "Rehearse <hello@walkinrehearsed.com>",
+  `smtp_max_frequency` 1s. The API key lives ONLY in Supabase's auth config —
+  rotate in Resend + re-PATCH if compromised.
+- `scripts/apply-auth-email-templates.mjs` applied cleanly once SMTP existed: all
+  five subjects + branded HTML templates live. Verified: direct Resend send landed;
+  a real signup dispatched its confirmation (confirmation_sent_at stamped) through
+  the new SMTP; test user deleted. Visual inbox check done by Tobias (Gmail MCP
+  token was expired for reading it programmatically).
+
 ## 2026-07-19 — Branded auth emails: blocked on custom SMTP (Resend chosen)
 
 - Wrote branded HTML templates + subjects for all five auth emails (confirmation,
