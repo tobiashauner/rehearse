@@ -4,6 +4,19 @@ Dated log of actual work sessions on this app. Add a new entry at the end of eac
 that changes the app (newest at top). Keep entries short — what changed and why, not a
 diff.
 
+## 2026-07-20 — Hero illustration replaced with sculpted scene
+
+- Tobias supplied an AI-vectorized hero SVG (interview conversation, two organic
+  blobs, brand palette). The file's "transparency" was a baked-in checkerboard —
+  1,260 white/#CBCBCA tile paths interleaved through the z-order plus a petrol
+  negative-space frame path — so vector cleanup was impractical. Instead: rendered
+  at 2x via Playwright, removed the background with a flood fill (seeded from
+  canvas edges AND every #CBCBCA pixel to reach enclosed pockets, allowlist of
+  checker/frame colors, 2px mask dilation to eat AA halos; scratch script pattern
+  preserved in this entry's commit message), shipped as
+  `public/illustrations/hero-scene.webp` (113KB, transparent). Source SVG kept in
+  `assets-src/` (out of `public/` so it isn't deployed). unDraw hero deleted.
+
 ## 2026-07-20 — Branded auth emails live (Resend SMTP wired)
 
 - Resend account created by Tobias (send-only API key; domain walkinrehearsed.com
