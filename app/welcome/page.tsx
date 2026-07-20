@@ -123,15 +123,17 @@ export default function WelcomePage() {
           </div>
 
           <div
-            className="welcome-rise relative mx-auto w-full max-w-md self-center pb-[clamp(2rem,5vh,4rem)] lg:max-w-[32rem]"
+            className="welcome-rise relative mx-auto w-full max-w-md self-center pb-[clamp(2rem,5vh,4rem)] lg:max-w-[36rem]"
             style={{ "--rise-delay": "0.24s" } as React.CSSProperties}
             aria-hidden="true"
           >
+            {/* Transparent-background WebP cut from assets-src/hero-scene-source.svg
+                (the source has a baked-in checkerboard; see vault 0023). */}
             <Image
-              src="/illustrations/hero.svg"
+              src="/illustrations/hero-scene.webp"
               alt=""
-              width={833}
-              height={633}
+              width={1980}
+              height={1073}
               unoptimized
               className="block h-auto w-full"
             />
