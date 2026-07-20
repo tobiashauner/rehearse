@@ -128,13 +128,13 @@ export default function WelcomePage() {
             style={{ "--rise-delay": "0.24s" } as React.CSSProperties}
             aria-hidden="true"
           >
-            {/* Transparent-background WebP cut from assets-src/hero-scene-source.svg
-                (the source has a baked-in checkerboard; see vault 0023). */}
+            {/* Clean re-export with real transparency (earlier export had a
+                baked-in checkerboard; see vault 0023). */}
             <Image
-              src="/illustrations/hero-scene.webp"
+              src="/illustrations/hero.svg"
               alt=""
-              width={1980}
-              height={1073}
+              width={1280}
+              height={859}
               unoptimized
               className="block h-auto w-full"
             />
