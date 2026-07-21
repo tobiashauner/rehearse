@@ -155,7 +155,7 @@ export default function WelcomePage() {
                 src: "/illustrations/upload.svg",
                 imgClass: "h-[17rem]",
                 title: "Bring the job",
-                copy: "Upload your resume and the job description. Rehearse studies both — and the company — before it writes a single question.",
+                copy: "Feed it everything you have — your resume, the job posting, company research, even notes on your hiring manager. Rehearse trains itself on all of it and prepares for your interview the way a real interviewer would: studying your background, probing your gaps, asking what this role would actually ask.",
               },
               {
                 src: "/illustrations/rehearse.svg",
@@ -209,17 +209,10 @@ export default function WelcomePage() {
               An interviewer, not a question bank
             </h2>
             <p className="mt-4 leading-relaxed text-foreground/80">
-              Feed it everything you have — your resume, the job posting,
-              company research, even notes on your hiring manager. Rehearse
-              trains itself on all of it and prepares for your interview the
-              way a real interviewer would: studying your background, probing
-              your gaps, asking what this role would actually ask.
-            </p>
-            <p className="mt-4 leading-relaxed text-foreground/80">
-              Then choose the room you&apos;ll face — friendly, direct,
-              skeptical, fast-paced. In adaptive mode it listens to each
-              answer and asks the follow-up a real interviewer would, instead
-              of marching down a script.
+              Choose the room you&apos;ll face — friendly, direct, skeptical,
+              fast-paced. In adaptive mode it listens to each answer and asks
+              the follow-up a real interviewer would, instead of marching
+              down a script.
             </p>
           </div>
           <div className="mx-auto w-full max-w-md rounded-2xl border bg-card p-6 shadow-resting lg:max-w-none">
