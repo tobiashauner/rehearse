@@ -23,6 +23,13 @@ export const metadata: Metadata = {
  * not a question bank" card stays product-true.
  */
 
+// Static waveform silhouette for the "Rehearse out loud" step (percent
+// heights); the welcome-bar CSS loop breathes scaleY around them.
+const WAVE_BARS = [
+  28, 46, 62, 40, 74, 55, 88, 66, 48, 80, 58, 36, 70, 92, 60, 44, 76, 52, 84,
+  64, 38, 72, 50, 30, 58, 42,
+];
+
 const PERSONALITIES = [
   "Friendly",
   "Direct",
@@ -155,18 +162,21 @@ export default function WelcomePage() {
               {
                 src: "/illustrations/upload.svg",
                 imgClass: "h-[17rem]",
+                waveform: false,
                 title: "Bring the job",
                 copy: "Feed it everything you have — your resume, the job posting, company research, even notes on your hiring manager. Rehearse trains itself on all of it and prepares for your interview the way a real interviewer would: studying your background, probing your gaps, asking what this role would actually ask.",
               },
               {
                 src: "/illustrations/rehearse.svg",
                 imgClass: "h-[17rem]",
+                waveform: true,
                 title: "Rehearse out loud",
                 copy: "A voice interviewer asks, listens, and follows up on what you actually said. Type your answers when speaking isn't an option.",
               },
               {
                 src: "/illustrations/ready.svg",
                 imgClass: "h-[17rem]",
+                waveform: false,
                 title: "Leave with a plan",
                 copy: "Every answer gets specific feedback; every session ends with a debrief — what worked, what to sharpen, what to expect next time.",
               },
@@ -186,6 +196,25 @@ export default function WelcomePage() {
                   />
                 </div>
                 <h3 className="mt-6 text-lg font-medium">{step.title}</h3>
+                {step.waveform && (
+                  <div
+                    className="mt-3 flex h-7 items-center justify-center gap-[3px] sm:justify-start"
+                    aria-hidden="true"
+                  >
+                    {WAVE_BARS.map((h, i) => (
+                      <span
+                        key={i}
+                        className="welcome-bar w-[3px] shrink-0 rounded-full bg-primary/80"
+                        style={
+                          {
+                            height: `${h}%`,
+                            "--bar-delay": `${(i % 7) * 0.13}s`,
+                          } as React.CSSProperties
+                        }
+                      />
+                    ))}
+                  </div>
+                )}
                 <p className="mx-auto mt-2 max-w-[38ch] text-base leading-relaxed text-muted-foreground sm:mx-0">
                   {step.copy}
                 </p>
