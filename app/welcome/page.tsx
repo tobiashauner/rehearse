@@ -203,15 +203,22 @@ export default function WelcomePage() {
               height={768}
               unoptimized
               aria-hidden="true"
-              className="mb-8 block h-auto w-full max-w-md"
+              className="block h-auto w-full max-w-md"
             />
             <h2 className="text-[clamp(1.75rem,3vw,2.375rem)] leading-tight font-medium tracking-[-0.015em] [text-wrap:balance]">
               An interviewer, not a question bank
             </h2>
             <p className="mt-4 leading-relaxed text-foreground/80">
-              Choose the room you&apos;ll actually face — friendly, direct,
-              skeptical, fast-paced. In adaptive mode the interviewer listens
-              to each answer and asks the follow-up a real one would, instead
+              Feed it everything you have — your resume, the job posting,
+              company research, even notes on your hiring manager. Rehearse
+              trains itself on all of it and prepares for your interview the
+              way a real interviewer would: studying your background, probing
+              your gaps, asking what this role would actually ask.
+            </p>
+            <p className="mt-4 leading-relaxed text-foreground/80">
+              Then choose the room you&apos;ll face — friendly, direct,
+              skeptical, fast-paced. In adaptive mode it listens to each
+              answer and asks the follow-up a real interviewer would, instead
               of marching down a script.
             </p>
           </div>
