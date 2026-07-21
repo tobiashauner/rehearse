@@ -158,8 +158,8 @@ export default function WelcomePage() {
                 copy: "Upload your resume and the job description. Rehearse studies both — and the company — before it writes a single question.",
               },
               {
-                src: "/illustrations/step-speak.svg",
-                imgClass: "h-40",
+                src: "/illustrations/rehearse.svg",
+                imgClass: "h-[17rem]",
                 title: "Rehearse out loud",
                 copy: "A voice interviewer asks, listens, and follows up on what you actually said. Type your answers when speaking isn't an option.",
               },
