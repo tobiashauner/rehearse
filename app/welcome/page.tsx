@@ -164,8 +164,8 @@ export default function WelcomePage() {
                 copy: "A voice interviewer asks, listens, and follows up on what you actually said. Type your answers when speaking isn't an option.",
               },
               {
-                src: "/illustrations/step-plan.svg",
-                imgClass: "h-40",
+                src: "/illustrations/ready.svg",
+                imgClass: "h-[17rem]",
                 title: "Leave with a plan",
                 copy: "Every answer gets specific feedback; every session ends with a debrief — what worked, what to sharpen, what to expect next time.",
               },
