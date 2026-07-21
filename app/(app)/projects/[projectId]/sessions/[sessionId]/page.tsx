@@ -79,7 +79,13 @@ export default async function InterviewSessionPage({
         <InterviewRunner
           projectId={projectId}
           sessionId={sessionId}
-          status={session.status as "configured" | "in_progress" | "completed"}
+          status={
+            session.status as
+              | "configured"
+              | "in_progress"
+              | "paused"
+              | "completed"
+          }
           baseQuestionCount={baseQuestionCount}
           lengthMinutes={session.length_minutes}
           reviewHref={reviewHref}

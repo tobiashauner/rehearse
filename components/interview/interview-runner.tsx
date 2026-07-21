@@ -7,6 +7,7 @@ import {
   ArrowRight,
   Keyboard,
   Mic,
+  Pause,
   Sparkles,
   Square,
   Volume2,
@@ -28,6 +29,7 @@ import type { AnswerEvaluation } from "@/lib/prompts/answer-evaluation";
 import {
   startInterview,
   getQuestionAudio,
+  pauseInterview,
   submitTextAnswer,
   submitAudioAnswer,
   completeInterview,
@@ -65,7 +67,7 @@ export function InterviewRunner({
 }: {
   projectId: string;
   sessionId: string;
-  status: "configured" | "in_progress" | "completed";
+  status: "configured" | "in_progress" | "paused" | "completed";
   baseQuestionCount: number;
   lengthMinutes: number;
   reviewHref: string;
@@ -253,23 +255,38 @@ export function InterviewRunner({
     router.refresh();
   }
 
+  async function handlePause() {
+    recorder.cancel();
+    stopQuestionAudio();
+    const result = await pauseInterview(projectId, sessionId);
+    if (result?.error) {
+      toast.error(result.error);
+      return;
+    }
+    toast.success("Interview paused — resume whenever you're ready.");
+    router.push(`/projects/${projectId}?tab=sessions`);
+    router.refresh();
+  }
+
   // Idle: start / resume screen.
   if (phase === "idle") {
-    const resuming = status === "in_progress";
+    const resuming = status === "in_progress" || status === "paused";
     return (
       <Card>
         <CardHeader>
           <CardTitle>
-            {resuming ? "Resume your interview" : "Ready when you are"}
+            {status === "paused"
+              ? "Interview paused"
+              : resuming
+                ? "Resume your interview"
+                : "Ready when you are"}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-muted-foreground">
-            {baseQuestionCount} questions
-            {" · "}~{lengthMinutes} min
-            {" · "}The interviewer asks each question out loud. Answer by
-            speaking — you&apos;ll get instant feedback and natural follow-ups.
-            You can always type instead.
+            {status === "paused"
+              ? "Your place is saved — every answer so far is kept, and paused time doesn't count toward your interview duration. Pick up right where you left off."
+              : `${baseQuestionCount} questions · ~${lengthMinutes} min · The interviewer asks each question out loud. Answer by speaking — you'll get instant feedback and natural follow-ups. You can always type instead.`}
           </p>
           <Button onClick={begin}>
             <Mic />
@@ -406,6 +423,14 @@ export function InterviewRunner({
                       </button>
                       <button
                         type="button"
+                        onClick={() => void handlePause()}
+                        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground underline-offset-4 hover:underline"
+                      >
+                        <Pause className="size-4" />
+                        Pause
+                      </button>
+                      <button
+                        type="button"
                         onClick={finish}
                         className="text-sm text-muted-foreground underline-offset-4 hover:underline"
                       >
@@ -446,6 +471,14 @@ export function InterviewRunner({
                       >
                         <Mic className="size-4" />
                         Answer out loud
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void handlePause()}
+                        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground underline-offset-4 hover:underline"
+                      >
+                        <Pause className="size-4" />
+                        Pause
                       </button>
                       <button
                         type="button"

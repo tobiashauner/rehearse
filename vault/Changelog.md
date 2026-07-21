@@ -4,6 +4,18 @@ Dated log of actual work sessions on this app. Add a new entry at the end of eac
 that changes the app (newest at top). Keep entries short — what changed and why, not a
 diff.
 
+## 2026-07-21 — Explicit interview pause
+
+- New `paused` session status (+ `paused_at` / `paused_seconds` on
+  `interview_sessions` — see [[Database-Schema]]): a "Pause" link in the runner
+  (both voice and text modes, next to "End interview early") pauses and routes to
+  the project's sessions tab; the session page shows a calm "Interview paused"
+  resume screen; the home banner says "You have a paused interview"; paused counts
+  as in-progress everywhere resumability matters (home tiles, project overview).
+  Paused time is excluded from the completed session's duration. Verified E2E with
+  a seeded session (no LLM calls): pause → DB paused/paused_at → resume folds
+  seconds → home banner; storage TTS objects cleaned up.
+
 ## 2026-07-21 — Full illustration set now sculpted; unDraw phase over
 
 - Across the day Tobias supplied AI-generated sculpted scenes for every slot and they

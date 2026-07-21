@@ -192,6 +192,8 @@ export type Database = {
           interviewer_personality: Database["public"]["Enums"]["interviewer_personality"]
           length_minutes: number
           overall_score: number | null
+          paused_at: string | null
+          paused_seconds: number
           project_id: string
           started_at: string | null
           status: Database["public"]["Enums"]["session_status"]
@@ -208,6 +210,8 @@ export type Database = {
           interviewer_personality: Database["public"]["Enums"]["interviewer_personality"]
           length_minutes: number
           overall_score?: number | null
+          paused_at?: string | null
+          paused_seconds?: number
           project_id: string
           started_at?: string | null
           status?: Database["public"]["Enums"]["session_status"]
@@ -224,6 +228,8 @@ export type Database = {
           interviewer_personality?: Database["public"]["Enums"]["interviewer_personality"]
           length_minutes?: number
           overall_score?: number | null
+          paused_at?: string | null
+          paused_seconds?: number
           project_id?: string
           started_at?: string | null
           status?: Database["public"]["Enums"]["session_status"]
@@ -400,7 +406,12 @@ export type Database = {
         | "hiring_manager_linkedin"
         | "personal_notes"
         | "other_pdf"
-      session_status: "configured" | "in_progress" | "completed" | "abandoned"
+      session_status:
+        | "configured"
+        | "in_progress"
+        | "completed"
+        | "abandoned"
+        | "paused"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -565,7 +576,13 @@ export const Constants = {
         "personal_notes",
         "other_pdf",
       ],
-      session_status: ["configured", "in_progress", "completed", "abandoned"],
+      session_status: [
+        "configured",
+        "in_progress",
+        "completed",
+        "abandoned",
+        "paused",
+      ],
     },
   },
 } as const

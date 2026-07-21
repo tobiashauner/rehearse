@@ -36,7 +36,7 @@ insert/update/delete together) with matching `using`/`with check` clauses.
 | `interview_difficulty` | `easy`, `medium`, `hard` |
 | `interviewer_personality` | `friendly`, `direct`, `analytical`, `skeptical`, `fast_paced`, `interrupts_often`, `pushes_for_metrics`, `challenges_assumptions` |
 | `conversation_mode` | `adaptive`, `fixed` |
-| `session_status` | `configured`, `in_progress`, `completed`, `abandoned` |
+| `session_status` | `configured`, `in_progress`, `paused`, `completed`, `abandoned` (`paused` added by migration `20260721231059_pause_interviews.sql`) |
 
 ## Tables
 
@@ -78,6 +78,11 @@ Same append-only/latest-row pattern as `ai_briefings`.
 `id, project_id, status (session_status, default configured), interview_type, difficulty,
 interviewer_personality, conversation_mode (default adaptive), length_minutes, started_at,
 completed_at, duration_seconds, overall_score (numeric 4,1), summary (jsonb), created_at`
+Migration `20260721231059` added `paused_at` (timestamptz, set while paused) and
+`paused_seconds` (int, accumulated pause time): `pauseInterview` sets `paused` +
+`paused_at`; resuming via `startInterview` folds the interval into `paused_seconds`;
+`completeInterview` subtracts paused time (incl. any open pause) from
+`duration_seconds` and clears `paused_at`.
 Config fields (`interview_type`, `difficulty`, etc.) are explicit typed columns, not jsonb —
 deliberate, so Analytics can filter/aggregate by them later. Wired up via the Configure
 Interview dialog (Interview Sessions tab) → `createInterviewSession` action, which inserts

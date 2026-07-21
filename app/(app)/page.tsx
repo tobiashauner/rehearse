@@ -47,7 +47,7 @@ export default async function HomePage() {
     .select(
       "id, project_id, status, interview_type, overall_score, started_at, completed_at",
     )
-    .in("status", ["in_progress", "completed"]);
+    .in("status", ["in_progress", "paused", "completed"]);
   const sessions = (sessionRows ?? []) as SessionRow[];
 
   const byProject = new Map<string, SessionRow[]>();
@@ -79,7 +79,9 @@ export default async function HomePage() {
       status: p.status,
       createdAt: p.created_at,
       scores,
-      hasInProgress: own.some((s) => s.status === "in_progress"),
+      hasInProgress: own.some(
+        (s) => s.status === "in_progress" || s.status === "paused",
+      ),
       lastActiveAt: activity.at(-1) ?? null,
     };
   });
@@ -87,7 +89,7 @@ export default async function HomePage() {
   // The one interview mid-flight (most recently started) gets the pane's
   // single primary action; everything else stays calm.
   const resumable = sessions
-    .filter((s) => s.status === "in_progress")
+    .filter((s) => s.status === "in_progress" || s.status === "paused")
     .sort(
       (a, b) =>
         new Date(b.started_at ?? 0).getTime() -
@@ -119,7 +121,9 @@ export default async function HomePage() {
               </div>
               <div>
                 <p className="text-sm font-medium">
-                  You have an interview mid-flight
+                  {resumable.status === "paused"
+                    ? "You have a paused interview"
+                    : "You have an interview mid-flight"}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   {optionLabel(INTERVIEW_TYPE_OPTIONS, resumable.interview_type)}{" "}

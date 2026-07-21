@@ -200,8 +200,9 @@ export default async function ProjectDetailsPage({
         }
         sessions={{
           count: allSessions.length,
-          inProgressCount: allSessions.filter((s) => s.status === "in_progress")
-            .length,
+          inProgressCount: allSessions.filter(
+            (s) => s.status === "in_progress" || s.status === "paused",
+          ).length,
           latestScore: scores.at(-1) ?? null,
           hasCoachingPlan: !!coachingPlan,
           recent: allSessions.map((s) => ({

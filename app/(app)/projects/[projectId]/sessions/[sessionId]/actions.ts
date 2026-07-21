@@ -82,6 +82,8 @@ type SessionRow = {
   conversation_mode: string;
   length_minutes: number;
   started_at: string | null;
+  paused_at: string | null;
+  paused_seconds: number;
 };
 
 type QuestionRow = {
@@ -108,7 +110,7 @@ async function loadSession(
   const { data } = await supabase
     .from("interview_sessions")
     .select(
-      "id, project_id, status, interview_type, difficulty, interviewer_personality, conversation_mode, length_minutes, started_at",
+      "id, project_id, status, interview_type, difficulty, interviewer_personality, conversation_mode, length_minutes, started_at, paused_at, paused_seconds",
     )
     .eq("id", sessionId)
     .eq("project_id", projectId)
@@ -213,11 +215,56 @@ export async function startInterview(projectId: string, sessionId: string) {
       .from("interview_sessions")
       .update({ status: "in_progress", started_at: new Date().toISOString() })
       .eq("id", sessionId);
+  } else if (session.status === "paused") {
+    // Fold the completed pause interval into paused_seconds so the final
+    // duration only counts time actually spent interviewing.
+    const pausedFor = session.paused_at
+      ? Math.max(
+          0,
+          Math.round(
+            (Date.now() - new Date(session.paused_at).getTime()) / 1000,
+          ),
+        )
+      : 0;
+    await supabase
+      .from("interview_sessions")
+      .update({
+        status: "in_progress",
+        paused_at: null,
+        paused_seconds: session.paused_seconds + pausedFor,
+      })
+      .eq("id", sessionId);
   }
 
   const next = await resolveNextQuestion(supabase, sessionId);
   revalidatePath(`/projects/${projectId}/sessions/${sessionId}`);
   return { success: true, next };
+}
+
+/**
+ * Explicitly pause an in-flight interview: the session keeps its place (all
+ * answers are already persisted per question) and shows up as resumable.
+ * Time spent paused is excluded from the completed session's duration.
+ */
+export async function pauseInterview(projectId: string, sessionId: string) {
+  const supabase = await createClient();
+  await requireUser(supabase);
+
+  const session = await loadSession(supabase, projectId, sessionId);
+  if (!session) return { error: "Session not found." };
+  if (session.status !== "in_progress") {
+    return { error: "Only an interview in progress can be paused." };
+  }
+
+  const { error } = await supabase
+    .from("interview_sessions")
+    .update({ status: "paused", paused_at: new Date().toISOString() })
+    .eq("id", sessionId);
+  if (error) return { error: error.message };
+
+  revalidatePath(`/projects/${projectId}/sessions/${sessionId}`);
+  revalidatePath(`/projects/${projectId}`);
+  return { success: true };
 }
 
 /**
@@ -596,10 +643,22 @@ export async function completeInterview(projectId: string, sessionId: string) {
   const session = await loadSession(supabase, projectId, sessionId);
   if (!session) return { error: "Session not found." };
 
+  // Wall-clock minus time explicitly paused (including a still-open pause,
+  // e.g. completing from the paused resume screen).
+  const openPauseSeconds = session.paused_at
+    ? Math.max(
+        0,
+        Math.round((Date.now() - new Date(session.paused_at).getTime()) / 1000),
+      )
+    : 0;
   const durationSeconds = session.started_at
     ? Math.max(
         0,
-        Math.round((Date.now() - new Date(session.started_at).getTime()) / 1000),
+        Math.round(
+          (Date.now() - new Date(session.started_at).getTime()) / 1000,
+        ) -
+          session.paused_seconds -
+          openPauseSeconds,
       )
     : null;
 
@@ -611,6 +670,7 @@ export async function completeInterview(projectId: string, sessionId: string) {
       status: "completed",
       completed_at: new Date().toISOString(),
       duration_seconds: durationSeconds,
+      paused_at: null,
     })
     .eq("id", sessionId);
 
