@@ -152,7 +152,7 @@ export default function WelcomePage() {
           <div className="mt-[clamp(2.5rem,5vh,4rem)] grid gap-x-10 gap-y-12 sm:grid-cols-3">
             {[
               {
-                src: "/illustrations/step-bring.svg",
+                src: "/illustrations/upload.svg",
                 title: "Bring the job",
                 copy: "Upload your resume and the job description. Rehearse studies both — and the company — before it writes a single question.",
               },
