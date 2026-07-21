@@ -48,7 +48,7 @@ export function AppHeader({ name, email }: { name: string; email: string }) {
           className="flex items-center rounded-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
         >
           <Image
-            src="/rehearse_logo.svg"
+            src="/rehearse_logo_dark.svg"
             alt="Rehearse"
             width={320}
             height={100}

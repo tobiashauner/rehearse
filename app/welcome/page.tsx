@@ -360,7 +360,7 @@ export default function WelcomePage() {
         <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-8">
           <div className="flex items-center gap-3">
             <Image
-              src="/rehearse_logo.svg"
+              src="/rehearse_logo_dark.svg"
               alt="Rehearse"
               width={320}
               height={100}
