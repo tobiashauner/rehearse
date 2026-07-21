@@ -128,13 +128,13 @@ export default function WelcomePage() {
             style={{ "--rise-delay": "0.24s" } as React.CSSProperties}
             aria-hidden="true"
           >
-            {/* Clean re-export with real transparency (earlier export had a
+            {/* Clean export with real transparency (an earlier export had a
                 baked-in checkerboard; see vault 0023). */}
             <Image
-              src="/illustrations/hero.svg"
+              src="/illustrations/hero_2.svg"
               alt=""
-              width={1280}
-              height={859}
+              width={1581}
+              height={1146}
               unoptimized
               className="block h-auto w-full"
             />
