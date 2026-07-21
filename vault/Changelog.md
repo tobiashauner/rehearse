@@ -6,6 +6,10 @@ diff.
 
 ## 2026-07-21 — Explicit interview pause
 
+- Also: the project layout's back affordance is now a labeled "← Back to all
+  projects" row above the title (the icon-only arrow from 0020's refinement was too
+  easy to miss); title aligns flush left again.
+
 - New `paused` session status (+ `paused_at` / `paused_seconds` on
   `interview_sessions` — see [[Database-Schema]]): a "Pause" link in the runner
   (both voice and text modes, next to "End interview early") pauses and routes to
