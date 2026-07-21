@@ -4,6 +4,20 @@ Dated log of actual work sessions on this app. Add a new entry at the end of eac
 that changes the app (newest at top). Keep entries short — what changed and why, not a
 diff.
 
+## 2026-07-21 — Full illustration set now sculpted; unDraw phase over
+
+- Across the day Tobias supplied AI-generated sculpted scenes for every slot and they
+  replaced all remaining unDraw assets: hero (`hero_2.svg`, diagonal composition),
+  steps (`upload.svg`, `rehearse.svg`, `ready.svg` — equal-height bottom-aligned
+  slots at 17rem), interviewer section (`styles.svg` personality-trio busts), final
+  CTA (`interview2.svg` face-to-face conversation). Some exports needed a baked-in
+  background canvas stripped (path 0 full-canvas rect) — same gotcha family as the
+  hero checkerboard, see [[Decisions/0023-illustrated-landing|0023]].
+- Same day: hero bg gradient (lightens left→right), gold circular arrow across logo
+  variants + favicon, logo files consolidated (`rehearse_logo_dark.svg` = dark
+  wordmark, `rehearse_logo_white.svg` = white; old files deleted), "Bring the job"
+  step carries the tailoring copy (feed it everything, AI trains itself).
+
 ## 2026-07-20 — Hero illustration replaced with sculpted scene
 
 - Tobias supplied an AI-vectorized hero SVG (interview conversation, two organic

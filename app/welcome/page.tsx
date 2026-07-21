@@ -16,10 +16,11 @@ export const metadata: Metadata = {
 
 /*
  * Public entry page, shown at "/" for signed-out visitors (middleware
- * rewrite). Illustration-led: unDraw scenes (undraw.co, MIT-like unDraw
- * license), downloaded to public/illustrations/ and recolored to the brand
- * palette (petrol accent, amber warmth — see vault decision 0023); the
- * "interviewer, not a question bank" card stays product-true.
+ * rewrite). Illustration-led: AI-generated sculpted scenes supplied by
+ * Tobias in public/illustrations/, already on the brand palette (petrol +
+ * amber; see vault decision 0023 for the export gotchas — baked-in
+ * checkerboards/canvases some exports need stripped). The "interviewer,
+ * not a question bank" card stays product-true.
  */
 
 const PERSONALITIES = [
@@ -185,7 +186,7 @@ export default function WelcomePage() {
                   />
                 </div>
                 <h3 className="mt-6 text-lg font-medium">{step.title}</h3>
-                <p className="mx-auto mt-2 max-w-[38ch] text-sm leading-relaxed text-muted-foreground sm:mx-0">
+                <p className="mx-auto mt-2 max-w-[38ch] text-base leading-relaxed text-muted-foreground sm:mx-0">
                   {step.copy}
                 </p>
               </div>
@@ -351,13 +352,13 @@ export default function WelcomePage() {
             </div>
           </div>
           <Image
-            src="/illustrations/cta-walk-in.svg"
+            src="/illustrations/interview2.svg"
             alt=""
-            width={760}
-            height={800}
+            width={1376}
+            height={768}
             unoptimized
             aria-hidden="true"
-            className="mx-auto block h-auto w-full max-w-[22rem]"
+            className="mx-auto block h-auto w-full max-w-[30rem]"
           />
         </section>
       </main>
