@@ -88,7 +88,7 @@ export default function WelcomePage() {
           </nav>
         </header>
 
-        <section className="mx-auto grid w-full max-w-6xl items-center gap-x-10 gap-y-4 px-6 pt-[clamp(2rem,6vh,4.5rem)] lg:grid-cols-[1fr_1.05fr]">
+        <section className="mx-auto grid w-full max-w-6xl items-center gap-x-8 gap-y-4 px-6 pt-[clamp(2rem,6vh,4.5rem)] lg:grid-cols-[0.9fr_1.2fr]">
           <div className="max-w-xl pb-[clamp(2rem,6vh,5rem)]">
             <h1
               className="welcome-rise text-[clamp(2.5rem,5.5vw,4rem)] leading-[1.06] font-medium tracking-[-0.025em] [text-wrap:balance]"
@@ -124,7 +124,7 @@ export default function WelcomePage() {
           </div>
 
           <div
-            className="welcome-rise relative mx-auto w-full max-w-md self-center pb-[clamp(2rem,5vh,4rem)] lg:max-w-[36rem]"
+            className="welcome-rise relative mx-auto w-full max-w-lg self-center pb-[clamp(1.5rem,4vh,3rem)] lg:max-w-none lg:-mr-6"
             style={{ "--rise-delay": "0.24s" } as React.CSSProperties}
             aria-hidden="true"
           >
