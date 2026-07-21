@@ -153,30 +153,37 @@ export default function WelcomePage() {
             {[
               {
                 src: "/illustrations/upload.svg",
+                imgClass: "h-56",
                 title: "Bring the job",
                 copy: "Upload your resume and the job description. Rehearse studies both — and the company — before it writes a single question.",
               },
               {
                 src: "/illustrations/step-speak.svg",
+                imgClass: "h-40",
                 title: "Rehearse out loud",
                 copy: "A voice interviewer asks, listens, and follows up on what you actually said. Type your answers when speaking isn't an option.",
               },
               {
                 src: "/illustrations/step-plan.svg",
+                imgClass: "h-40",
                 title: "Leave with a plan",
                 copy: "Every answer gets specific feedback; every session ends with a debrief — what worked, what to sharpen, what to expect next time.",
               },
             ].map((step) => (
               <div key={step.title} className="text-center sm:text-left">
-                <Image
-                  src={step.src}
-                  alt=""
-                  width={800}
-                  height={560}
-                  unoptimized
-                  aria-hidden="true"
-                  className="mx-auto block h-40 w-auto sm:mx-0"
-                />
+                {/* Equal-height, bottom-aligned slots keep the three titles on
+                    one line even when the artwork sizes differ. */}
+                <div className="flex h-56 items-end justify-center sm:justify-start">
+                  <Image
+                    src={step.src}
+                    alt=""
+                    width={800}
+                    height={560}
+                    unoptimized
+                    aria-hidden="true"
+                    className={cn("block w-auto", step.imgClass)}
+                  />
+                </div>
                 <h3 className="mt-6 text-lg font-medium">{step.title}</h3>
                 <p className="mx-auto mt-2 max-w-[38ch] text-sm leading-relaxed text-muted-foreground sm:mx-0">
                   {step.copy}
