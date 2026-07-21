@@ -197,13 +197,13 @@ export default function WelcomePage() {
         <section className="mx-auto grid w-full max-w-6xl items-center gap-x-14 gap-y-10 px-6 py-[clamp(3rem,8vh,6rem)] lg:grid-cols-2">
           <div className="max-w-lg">
             <Image
-              src="/illustrations/conversation.svg"
+              src="/illustrations/styles.svg"
               alt=""
-              width={842}
-              height={843}
+              width={1376}
+              height={768}
               unoptimized
               aria-hidden="true"
-              className="mb-8 block h-auto w-full max-w-[17rem]"
+              className="mb-8 block h-auto w-full max-w-md"
             />
             <h2 className="text-[clamp(1.75rem,3vw,2.375rem)] leading-tight font-medium tracking-[-0.015em] [text-wrap:balance]">
               An interviewer, not a question bank
