@@ -6,9 +6,10 @@ import { createClient } from "@/lib/supabase/server";
 import { ProjectSidebar } from "@/components/project/project-sidebar";
 
 /*
- * Shared frame for every page inside a project: the project title (with a
- * back-to-projects arrow on its left) sits above the section rail + content,
- * so pages below only render their own section-level headings.
+ * Shared frame for every page inside a project: a labeled "Back to all
+ * projects" link on its own row, then the project title above the section
+ * rail + content, so pages below only render their own section-level
+ * headings.
  */
 export default async function ProjectLayout({
   children,
@@ -35,27 +36,27 @@ export default async function ProjectLayout({
     "No role or company set";
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-start gap-3">
+    <div className="space-y-6">
+      <div>
         <Link
           href="/"
-          aria-label="All projects"
-          title="All projects"
-          className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
+          className="inline-flex items-center gap-1.5 rounded-lg py-1 pr-2 text-sm text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
         >
           <ArrowLeft className="size-4" />
+          Back to all projects
         </Link>
-        <div className="min-w-0 space-y-1">
-          <div className="flex items-center gap-2">
-            <h1 className="truncate text-3xl font-medium">{project.title}</h1>
-            {project.status === "archived" && (
-              <Badge variant="outline" className="capitalize">
-                archived
-              </Badge>
-            )}
-          </div>
-          <p className="text-muted-foreground">{subtitle}</p>
+      </div>
+
+      <div className="min-w-0 space-y-1">
+        <div className="flex items-center gap-2">
+          <h1 className="truncate text-3xl font-medium">{project.title}</h1>
+          {project.status === "archived" && (
+            <Badge variant="outline" className="capitalize">
+              archived
+            </Badge>
+          )}
         </div>
+        <p className="text-muted-foreground">{subtitle}</p>
       </div>
 
       <div className="flex flex-col gap-6 md:flex-row md:gap-10">
