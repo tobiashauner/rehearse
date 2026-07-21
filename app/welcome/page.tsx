@@ -153,7 +153,7 @@ export default function WelcomePage() {
             {[
               {
                 src: "/illustrations/upload.svg",
-                imgClass: "h-56",
+                imgClass: "h-[17rem]",
                 title: "Bring the job",
                 copy: "Upload your resume and the job description. Rehearse studies both — and the company — before it writes a single question.",
               },
@@ -173,7 +173,7 @@ export default function WelcomePage() {
               <div key={step.title} className="text-center sm:text-left">
                 {/* Equal-height, bottom-aligned slots keep the three titles on
                     one line even when the artwork sizes differ. */}
-                <div className="flex h-56 items-end justify-center sm:justify-start">
+                <div className="flex h-[17rem] items-end justify-center sm:justify-start">
                   <Image
                     src={step.src}
                     alt=""
