@@ -332,7 +332,7 @@ export default function WelcomePage() {
         </div>
 
         {/* ————— Final CTA: the door ————— */}
-        <section className="mx-auto grid w-full max-w-6xl items-center gap-x-10 gap-y-8 px-6 pt-[clamp(2.5rem,7vh,5rem)] pb-[clamp(3.5rem,9vh,6.5rem)] lg:grid-cols-[1fr_0.85fr]">
+        <section className="mx-auto grid w-full max-w-6xl items-center gap-x-10 gap-y-8 px-6 pt-[clamp(2.5rem,7vh,5rem)] pb-[clamp(3.5rem,9vh,6.5rem)] lg:grid-cols-[0.75fr_1.25fr]">
           <div className="max-w-xl max-lg:text-center max-lg:mx-auto">
             <h2 className="text-[clamp(1.875rem,3.6vw,2.75rem)] leading-tight font-medium tracking-[-0.02em] [text-wrap:balance]">
               Your next interview deserves a rehearsal.
@@ -358,7 +358,7 @@ export default function WelcomePage() {
             height={768}
             unoptimized
             aria-hidden="true"
-            className="mx-auto block h-auto w-full max-w-[30rem]"
+            className="mx-auto block h-auto w-full max-w-[45rem] lg:-mr-6"
           />
         </section>
       </main>
