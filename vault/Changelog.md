@@ -4,6 +4,17 @@ Dated log of actual work sessions on this app. Add a new entry at the end of eac
 that changes the app (newest at top). Keep entries short — what changed and why, not a
 diff.
 
+## 2026-07-21 — Landing: scoring explained with a rotating feedback showcase
+
+- New "A score with a reason behind it" section on the landing (between the
+  interviewer section and the coaching band): copy explains the scoring mechanism
+  (difficulty-calibrated, graded against resume/JD/briefing, strengths +
+  improvements + missed points per answer, session debrief roll-up) beside
+  `components/welcome/scoring-carousel.tsx` — an auto-advancing slideshow of five
+  product-true feedback cards (score, what worked, how to improve, what a strong
+  answer adds, session debrief). Pauses on hover/focus, dot tabs jump, no autoplay
+  under prefers-reduced-motion.
+
 ## 2026-07-21 — AI Briefing redesigned as a three-chapter roadmap
 
 - `ai-briefing-view.tsx` rebuilt: the 11 briefing fields now group into three

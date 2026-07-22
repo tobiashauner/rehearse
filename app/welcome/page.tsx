@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AuthPopover } from "@/components/welcome/auth-popover";
+import { ScoringCarousel } from "@/components/welcome/scoring-carousel";
 import "./welcome.css";
 
 export const metadata: Metadata = {
@@ -284,6 +285,27 @@ export default function WelcomePage() {
               </p>
             </div>
           </div>
+        </section>
+
+        {/* ————— How scoring works: rotating feedback-card showcase ————— */}
+        <section className="mx-auto grid w-full max-w-6xl items-center gap-x-14 gap-y-10 px-6 py-[clamp(3rem,8vh,6rem)] lg:grid-cols-2">
+          <div className="max-w-lg">
+            <h2 className="text-[clamp(1.75rem,3vw,2.375rem)] leading-tight font-medium tracking-[-0.015em] [text-wrap:balance]">
+              A score with a reason behind it
+            </h2>
+            <p className="mt-4 leading-relaxed text-foreground/80">
+              Every answer is scored against your resume, the job description,
+              and the question&apos;s difficulty — not a one-size-fits-all
+              rubric. Behind each number: what worked, concrete ways to
+              sharpen it, and the points a strong answer would have covered.
+            </p>
+            <p className="mt-4 leading-relaxed text-foreground/80">
+              Finish a session and it all rolls up into a debrief — overall
+              score, your strongest areas, and exactly what to practice before
+              the real thing.
+            </p>
+          </div>
+          <ScoringCarousel className="mx-auto w-full max-w-md lg:max-w-none" />
         </section>
 
         {/* ————— Coaching, not testing — petrol band with organic edges ————— */}
