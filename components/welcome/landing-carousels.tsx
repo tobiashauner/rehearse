@@ -72,9 +72,11 @@ function Carousel({
       onFocus={() => setPaused(true)}
       onBlur={() => setPaused(false)}
     >
+      {/* All slides share one grid cell, so the card is always as tall as
+          its tallest slide — no magic min-height to fall out of sync. */}
       <div
         className={cn(
-          "relative min-h-[16rem] overflow-hidden rounded-2xl p-6 sm:min-h-[14.5rem]",
+          "grid overflow-hidden rounded-2xl",
           dark
             ? "bg-white/8 ring-1 ring-white/15"
             : "border bg-card shadow-resting",
@@ -85,7 +87,7 @@ function Carousel({
             key={s.key}
             aria-hidden={i !== active}
             className={cn(
-              "absolute inset-0 p-6 transition-all duration-500 ease-out motion-reduce:transition-none",
+              "col-start-1 row-start-1 p-6 transition-all duration-500 ease-out motion-reduce:transition-none",
               i === active
                 ? "translate-y-0 opacity-100"
                 : "pointer-events-none translate-y-3 opacity-0",
