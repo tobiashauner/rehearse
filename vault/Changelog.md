@@ -4,6 +4,17 @@ Dated log of actual work sessions on this app. Add a new entry at the end of eac
 that changes the app (newest at top). Keep entries short — what changed and why, not a
 diff.
 
+## 2026-07-21 — AI Briefing redesigned as a three-chapter roadmap
+
+- `ai-briefing-view.tsx` rebuilt: the 11 briefing fields now group into three
+  chapters on a vertical spine with petrol icon markers — "The room you're walking
+  into" (roleSummary lede, culture, skill chips, leadership signals), "Where you
+  stand" (strengths vs "worth shoring up" two-up with distinct icons, plus a calm
+  "An interviewer might wonder…" callout), "Your preparation plan" (accent focus
+  chips, numbered stories, STAR list, Q1–Qn question rows). Chapters are native
+  `<details open>` — collapsible with zero JS. Replaces the identical 2-col card
+  grid. Verified with a seeded briefing (screenshots, collapse toggle).
+
 ## 2026-07-21 — Explicit interview pause
 
 - Also: the project layout's back affordance is now a labeled "← Back to all
