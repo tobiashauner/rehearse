@@ -6,6 +6,17 @@ diff.
 
 ## 2026-07-21 — Landing: scoring explained with a rotating feedback showcase
 
+- Follow-up: copy now states the real scale (0–100, difficulty-calibrated, graded
+  against the user's materials) — this surfaced that the landing had been showing
+  0–10-style scores (7.8, 5.4→8.1 chart) while the product scores 0–100
+  (`answerEvaluationSchema`, review page shows "/100"); all landing numbers now
+  match the product (78/100, chart 54→81). Added a bridge line ("The score tells
+  you where you stand. The coaching is what moves it.") into the coaching band,
+  whose static chart became a second, dark-tone carousel
+  (`landing-carousels.tsx`, shared Carousel): trend chart · coaching plan
+  (focusAreas: area/why/drill) · prescribed next interview (adaptive targeting,
+  no repeats). Slide content grounded in `coachingPlanSchema`.
+
 - New "A score with a reason behind it" section on the landing (between the
   interviewer section and the coaching band): copy explains the scoring mechanism
   (difficulty-calibrated, graded against resume/JD/briefing, strengths +

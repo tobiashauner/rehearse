@@ -6,7 +6,10 @@ import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AuthPopover } from "@/components/welcome/auth-popover";
-import { ScoringCarousel } from "@/components/welcome/scoring-carousel";
+import {
+  CoachingCarousel,
+  ScoringCarousel,
+} from "@/components/welcome/landing-carousels";
 import "./welcome.css";
 
 export const metadata: Metadata = {
@@ -294,15 +297,21 @@ export default function WelcomePage() {
               A score with a reason behind it
             </h2>
             <p className="mt-4 leading-relaxed text-foreground/80">
-              Every answer is scored against your resume, the job description,
-              and the question&apos;s difficulty — not a one-size-fits-all
-              rubric. Behind each number: what worked, concrete ways to
-              sharpen it, and the points a strong answer would have covered.
+              Every answer gets a score from 0 to 100 — graded by the same AI
+              that studied your resume, the job description, and the briefing,
+              so &ldquo;good&rdquo; is defined by this role, not by average
+              answers. It&apos;s calibrated to difficulty too: an 80 on a hard
+              question means more than an 80 on an easy one.
             </p>
             <p className="mt-4 leading-relaxed text-foreground/80">
-              Finish a session and it all rolls up into a debrief — overall
-              score, your strongest areas, and exactly what to practice before
-              the real thing.
+              Behind each number: what worked, concrete ways to sharpen it,
+              and the points a strong answer would have covered. Finish a
+              session and it rolls up into a debrief — overall score,
+              strongest areas, what to practice.
+            </p>
+            <p className="mt-4 font-medium">
+              The score tells you where you stand. The coaching is what moves
+              it.
             </p>
           </div>
           <ScoringCarousel className="mx-auto w-full max-w-md lg:max-w-none" />
@@ -326,56 +335,7 @@ export default function WelcomePage() {
                 over months, the feedback stays specific and never punishing.
               </p>
             </div>
-            <div className="relative mx-auto w-full max-w-md lg:max-w-none">
-              <figure
-                className="relative rounded-2xl bg-white/8 p-6 ring-1 ring-white/15"
-                role="img"
-                aria-label="Line chart of interview scores improving from 5.4 to 8.1 across five practice sessions"
-              >
-                <figcaption className="flex items-baseline justify-between">
-                  <span className="text-sm font-medium">Session scores</span>
-                  <span className="text-xs text-white/70">
-                    five sessions, three weeks
-                  </span>
-                </figcaption>
-                <svg
-                  viewBox="0 0 320 130"
-                  className="mt-4 w-full"
-                  aria-hidden="true"
-                >
-                  <polyline
-                    points="12,96 86,78 160,84 234,46 308,24"
-                    fill="none"
-                    stroke="oklch(0.80 0.13 89)"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  {[
-                    [12, 96, "5.4"],
-                    [86, 78, "6.2"],
-                    [160, 84, "5.9"],
-                    [234, 46, "7.4"],
-                    [308, 24, "8.1"],
-                  ].map(([x, y, label]) => (
-                    <g key={label}>
-                      <circle cx={x} cy={y} r="4" fill="white" />
-                      <text
-                        x={x}
-                        y={Number(y) - 12}
-                        textAnchor="middle"
-                        fill="white"
-                        fillOpacity="0.9"
-                        fontSize="12"
-                        fontFamily="inherit"
-                      >
-                        {label}
-                      </text>
-                    </g>
-                  ))}
-                </svg>
-              </figure>
-            </div>
+            <CoachingCarousel className="mx-auto w-full max-w-md lg:max-w-none" />
           </div>
         </section>
         <div className="-mt-px bg-[oklch(0.40_0.12_200)]">
