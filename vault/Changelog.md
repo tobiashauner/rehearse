@@ -4,6 +4,16 @@ Dated log of actual work sessions on this app. Add a new entry at the end of eac
 that changes the app (newest at top). Keep entries short — what changed and why, not a
 diff.
 
+## 2026-07-24 — Project overview tiles polished
+
+- `section-tiles.tsx`: petrol icon chips in tile headers (same icons as the rail);
+  list items are tinted rounded rows (`bg-muted/60`, no borders — rows, not nested
+  cards); session rows show status icon + color (green CircleCheck + score for
+  completed, amber CirclePause "paused", petrol Mic "in progress", muted
+  CircleDashed "ready") via a structured `recent: {primary, status, score}` shape
+  from the project page; every empty tile is now a centered large muted icon +
+  explanatory gray copy (EmptyState). Verified with seeded rich + empty projects.
+
 ## 2026-07-21 — Landing: scoring explained with a rotating feedback showcase
 
 - Follow-up: copy now states the real scale (0–100, difficulty-calibrated, graded

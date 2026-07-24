@@ -1,5 +1,16 @@
 import Link from "next/link";
-import { ChevronRight } from "lucide-react";
+import {
+  BarChart3,
+  ChevronRight,
+  CircleCheck,
+  CircleDashed,
+  CirclePause,
+  FileText,
+  Mic,
+  Sparkles,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Sparkline, formatTileDate } from "@/components/tiles";
 
@@ -9,13 +20,18 @@ import { Sparkline, formatTileDate } from "@/components/tiles";
  * briefing in itself. Tiles link into their section; the rail handles nav.
  */
 
+// Muted green for "completed" — a state, not a grade, so it stays calm.
+const COMPLETE_GREEN = "text-[oklch(0.55_0.12_150)]";
+
 function SectionTile({
   href,
   title,
+  icon: Icon,
   children,
 }: {
   href: string;
   title: string;
+  icon: LucideIcon;
   children: React.ReactNode;
 }) {
   return (
@@ -23,23 +39,36 @@ function SectionTile({
       href={href}
       className="group flex flex-col gap-3 rounded-xl bg-card p-5 shadow-resting ring-1 ring-foreground/10 outline-none transition-colors hover:bg-accent focus-visible:ring-3 focus-visible:ring-ring/50"
     >
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center gap-2.5">
+        <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-badge-accent/10 text-badge-accent">
+          <Icon className="size-4" />
+        </span>
         <h2 className="font-medium">{title}</h2>
-        <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+        <ChevronRight className="ml-auto size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
       </div>
       {children}
     </Link>
   );
 }
 
-function MiniList({ items }: { items: { primary: string; secondary?: string }[] }) {
+/** Quiet list rows: tinted, rounded, no card chrome. */
+function MiniList({
+  items,
+}: {
+  items: { primary: string; secondary?: string }[];
+}) {
   return (
     <ul className="space-y-1.5">
       {items.map((item, i) => (
-        <li key={i} className="flex items-baseline justify-between gap-3 text-sm">
+        <li
+          key={i}
+          className="flex items-baseline justify-between gap-3 rounded-lg bg-muted/60 px-3 py-2 text-sm"
+        >
           <span className="truncate">{item.primary}</span>
           {item.secondary && (
-            <span className="shrink-0 text-muted-foreground">{item.secondary}</span>
+            <span className="shrink-0 text-muted-foreground">
+              {item.secondary}
+            </span>
           )}
         </li>
       ))}
@@ -47,8 +76,74 @@ function MiniList({ items }: { items: { primary: string; secondary?: string }[] 
   );
 }
 
-function Hint({ children }: { children: React.ReactNode }) {
-  return <p className="text-sm text-muted-foreground">{children}</p>;
+const SESSION_STATUS: Record<
+  string,
+  { icon: LucideIcon; label: string; className: string }
+> = {
+  completed: { icon: CircleCheck, label: "completed", className: COMPLETE_GREEN },
+  paused: { icon: CirclePause, label: "paused", className: "text-primary" },
+  in_progress: { icon: Mic, label: "in progress", className: "text-badge-accent" },
+  configured: {
+    icon: CircleDashed,
+    label: "ready",
+    className: "text-muted-foreground",
+  },
+  abandoned: {
+    icon: CircleDashed,
+    label: "abandoned",
+    className: "text-muted-foreground",
+  },
+};
+
+function SessionRows({
+  items,
+}: {
+  items: { primary: string; status: string; score: number | null }[];
+}) {
+  return (
+    <ul className="space-y-1.5">
+      {items.map((item, i) => {
+        const status = SESSION_STATUS[item.status] ?? SESSION_STATUS.configured;
+        return (
+          <li
+            key={i}
+            className="flex items-center justify-between gap-3 rounded-lg bg-muted/60 px-3 py-2 text-sm"
+          >
+            <span className="truncate">{item.primary}</span>
+            <span
+              className={cn(
+                "flex shrink-0 items-center gap-1.5",
+                status.className,
+              )}
+            >
+              <status.icon className="size-4" />
+              {item.score !== null ? (
+                <span className="font-medium tabular-nums">{item.score}</span>
+              ) : (
+                <span className="text-xs">{status.label}</span>
+              )}
+            </span>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+/** Empty tile: a larger centered icon with quiet copy underneath. */
+function EmptyState({
+  icon: Icon,
+  children,
+}: {
+  icon: LucideIcon;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-1 flex-col items-center justify-center gap-2.5 py-6 text-center">
+      <Icon className="size-8 text-muted-foreground/40" />
+      <p className="max-w-[26ch] text-sm text-muted-foreground">{children}</p>
+    </div>
+  );
 }
 
 export type ResourcesTileData = {
@@ -67,7 +162,7 @@ export type SessionsTileData = {
   inProgressCount: number;
   latestScore: number | null;
   hasCoachingPlan: boolean;
-  recent: { primary: string; secondary?: string }[];
+  recent: { primary: string; status: string; score: number | null }[];
 };
 
 export type AnalyticsTileData = {
@@ -95,7 +190,11 @@ export function SectionTiles({
 
   return (
     <div className="grid gap-4 sm:grid-cols-2">
-      <SectionTile href={`${base}?tab=resources`} title="Resources">
+      <SectionTile
+        href={`${base}?tab=resources`}
+        title="Resources"
+        icon={FileText}
+      >
         {resources.count > 0 ? (
           <>
             <MiniList items={resources.items.slice(0, 3)} />
@@ -106,14 +205,18 @@ export function SectionTiles({
             )}
           </>
         ) : (
-          <Hint>
-            Nothing here yet. Add your resume and the job description —
-            interviews are built from them.
-          </Hint>
+          <EmptyState icon={FileText}>
+            Add your resume and the job description — interviews are built
+            from them.
+          </EmptyState>
         )}
       </SectionTile>
 
-      <SectionTile href={`${base}?tab=briefing`} title="AI Briefing">
+      <SectionTile
+        href={`${base}?tab=briefing`}
+        title="AI Briefing"
+        icon={Sparkles}
+      >
         {briefing ? (
           <>
             <p className="line-clamp-3 text-sm text-muted-foreground">
@@ -131,15 +234,19 @@ export function SectionTiles({
             </div>
           </>
         ) : (
-          <Hint>
+          <EmptyState icon={Sparkles}>
             {hasAnyResource
               ? "Ready to generate — a structured read on the role, your fit, and likely questions."
               : "Needs at least one resource first."}
-          </Hint>
+          </EmptyState>
         )}
       </SectionTile>
 
-      <SectionTile href={`${base}?tab=sessions`} title="Interview Sessions">
+      <SectionTile
+        href={`${base}?tab=sessions`}
+        title="Interview Sessions"
+        icon={Mic}
+      >
         {sessions.count > 0 ? (
           <>
             <div className="flex items-baseline justify-between gap-3">
@@ -158,7 +265,7 @@ export function SectionTiles({
                 {sessions.count} interview{sessions.count === 1 ? "" : "s"}
               </p>
             </div>
-            <MiniList items={sessions.recent.slice(0, 3)} />
+            <SessionRows items={sessions.recent.slice(0, 3)} />
             {(sessions.inProgressCount > 0 || sessions.hasCoachingPlan) && (
               <p className="mt-auto text-sm font-medium text-badge-accent">
                 {sessions.inProgressCount > 0
@@ -168,15 +275,19 @@ export function SectionTiles({
             )}
           </>
         ) : (
-          <Hint>
+          <EmptyState icon={Mic}>
             {briefing
               ? "Configure your first interview — questions come from your briefing."
               : "Generate the AI briefing first, then rehearse."}
-          </Hint>
+          </EmptyState>
         )}
       </SectionTile>
 
-      <SectionTile href={`${base}?tab=analytics`} title="Analytics">
+      <SectionTile
+        href={`${base}?tab=analytics`}
+        title="Analytics"
+        icon={BarChart3}
+      >
         {analytics ? (
           <>
             <div className="flex items-end justify-between gap-4">
@@ -197,7 +308,10 @@ export function SectionTiles({
             </p>
           </>
         ) : (
-          <Hint>Fills in as you complete interviews.</Hint>
+          <EmptyState icon={BarChart3}>
+            Your score trend, average, and practice time appear here after
+            your first completed interview.
+          </EmptyState>
         )}
       </SectionTile>
     </div>

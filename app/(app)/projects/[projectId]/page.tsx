@@ -207,10 +207,11 @@ export default async function ProjectDetailsPage({
           hasCoachingPlan: !!coachingPlan,
           recent: allSessions.map((s) => ({
             primary: optionLabel(INTERVIEW_TYPE_OPTIONS, s.interview_type),
-            secondary:
+            status: s.status,
+            score:
               s.status === "completed" && s.overall_score !== null
-                ? `${Math.round(Number(s.overall_score))}`
-                : s.status.replace("_", " "),
+                ? Math.round(Number(s.overall_score))
+                : null,
           })),
         }}
         analytics={
