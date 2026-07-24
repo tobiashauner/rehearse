@@ -83,6 +83,11 @@ Migration `20260721231059` added `paused_at` (timestamptz, set while paused) and
 `paused_at`; resuming via `startInterview` folds the interval into `paused_seconds`;
 `completeInterview` subtracts paused time (incl. any open pause) from
 `duration_seconds` and clears `paused_at`.
+Migration `20260724174040` added `interviewer_voice` (text, default `alloy`) and
+`playback_rate` (numeric 3,2, default 1.0, check 0.5–2.0) — chosen per interview in
+the Configure dialog. `getQuestionAudio` passes `interviewer_voice` to the TTS
+`speech.create` (falls back to `OPENAI_TTS_VOICE`); the runner applies
+`playback_rate` to the question `<audio>` element.
 Config fields (`interview_type`, `difficulty`, etc.) are explicit typed columns, not jsonb —
 deliberate, so Analytics can filter/aggregate by them later. Wired up via the Configure
 Interview dialog (Interview Sessions tab) → `createInterviewSession` action, which inserts

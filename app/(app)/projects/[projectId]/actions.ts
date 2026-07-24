@@ -8,6 +8,7 @@ import {
   textResourceSchema,
   urlResourceSchema,
 } from "@/lib/validations/resource";
+import { projectSchema, type ProjectValues } from "@/lib/validations/project";
 import { createClient } from "@/lib/supabase/server";
 import { extractFileText } from "@/lib/resources/extract-text";
 
@@ -178,4 +179,95 @@ export async function getResourceDownloadUrl(storagePath: string) {
   }
 
   return { url: data.signedUrl };
+}
+
+/** Rename a project or change its role/company. */
+export async function updateProject(projectId: string, values: ProjectValues) {
+  const parsed = projectSchema.safeParse(values);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid details." };
+  }
+
+  const supabase = await createClient();
+  await requireUser(supabase);
+
+  const { error } = await supabase
+    .from("projects")
+    .update({
+      title: parsed.data.title.trim(),
+      // Empty strings clear the field rather than storing "".
+      company: parsed.data.company?.trim() || null,
+      role: parsed.data.role?.trim() || null,
+    })
+    .eq("id", projectId);
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath(`/projects/${projectId}`);
+  return { success: true };
+}
+
+/**
+ * Permanently delete a project and everything under it. The DB cascade
+ * (projects → resources / ai_briefings / coaching_plans / interview_sessions →
+ * questions → answers) handles the rows; storage objects don't cascade, so we
+ * clear them explicitly first (best-effort — a storage failure shouldn't block
+ * the row deletion the user asked for). `confirmTitle` must match the project's
+ * title exactly, matching the typed confirmation in the UI.
+ */
+export async function deleteProject(projectId: string, confirmTitle: string) {
+  const supabase = await createClient();
+  const user = await requireUser(supabase);
+
+  const { data: project } = await supabase
+    .from("projects")
+    .select("title")
+    .eq("id", projectId)
+    .single();
+  if (!project) {
+    return { error: "Project not found." };
+  }
+  if (confirmTitle.trim() !== project.title) {
+    return { error: "The name you typed doesn't match this project." };
+  }
+
+  // Resource files.
+  const { data: resources } = await supabase
+    .from("resources")
+    .select("storage_path")
+    .eq("project_id", projectId);
+  const resourcePaths = (resources ?? [])
+    .map((r) => r.storage_path)
+    .filter((p): p is string => Boolean(p));
+  if (resourcePaths.length > 0) {
+    await supabase.storage.from("resources").remove(resourcePaths);
+  }
+
+  // Interview audio (answer recordings + generated TTS) lives under
+  // <uid>/<sessionId>/{answers,questions}/… — list and remove per session.
+  const { data: sessions } = await supabase
+    .from("interview_sessions")
+    .select("id")
+    .eq("project_id", projectId);
+  const audio = supabase.storage.from("interview-audio");
+  for (const s of sessions ?? []) {
+    for (const sub of ["answers", "questions"]) {
+      const { data: files } = await audio.list(`${user.id}/${s.id}/${sub}`, {
+        limit: 1000,
+      });
+      const paths = (files ?? [])
+        .filter((f) => f.id)
+        .map((f) => `${user.id}/${s.id}/${sub}/${f.name}`);
+      if (paths.length > 0) await audio.remove(paths);
+    }
+  }
+
+  const { error } = await supabase.from("projects").delete().eq("id", projectId);
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath("/");
+  redirect("/");
 }

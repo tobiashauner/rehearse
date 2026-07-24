@@ -84,6 +84,7 @@ type SessionRow = {
   started_at: string | null;
   paused_at: string | null;
   paused_seconds: number;
+  interviewer_voice: string;
 };
 
 type QuestionRow = {
@@ -110,7 +111,7 @@ async function loadSession(
   const { data } = await supabase
     .from("interview_sessions")
     .select(
-      "id, project_id, status, interview_type, difficulty, interviewer_personality, conversation_mode, length_minutes, started_at, paused_at, paused_seconds",
+      "id, project_id, status, interview_type, difficulty, interviewer_personality, conversation_mode, length_minutes, started_at, paused_at, paused_seconds, interviewer_voice",
     )
     .eq("id", sessionId)
     .eq("project_id", projectId)
@@ -312,7 +313,7 @@ export async function getQuestionAudio(
     const style = PERSONALITY_TTS_STYLE[session.interviewer_personality];
     const speech = await getOpenAIClient().audio.speech.create({
       model: OPENAI_TTS_MODEL,
-      voice: OPENAI_TTS_VOICE,
+      voice: session.interviewer_voice || OPENAI_TTS_VOICE,
       input: question.question,
       instructions: `You are a job interviewer asking the candidate a question out loud.${style ? ` ${style}` : ""}`,
     });

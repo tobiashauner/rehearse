@@ -190,10 +190,12 @@ export type Database = {
           id: string
           interview_type: Database["public"]["Enums"]["interview_type"]
           interviewer_personality: Database["public"]["Enums"]["interviewer_personality"]
+          interviewer_voice: string
           length_minutes: number
           overall_score: number | null
           paused_at: string | null
           paused_seconds: number
+          playback_rate: number
           project_id: string
           started_at: string | null
           status: Database["public"]["Enums"]["session_status"]
@@ -208,10 +210,12 @@ export type Database = {
           id?: string
           interview_type: Database["public"]["Enums"]["interview_type"]
           interviewer_personality: Database["public"]["Enums"]["interviewer_personality"]
+          interviewer_voice?: string
           length_minutes: number
           overall_score?: number | null
           paused_at?: string | null
           paused_seconds?: number
+          playback_rate?: number
           project_id: string
           started_at?: string | null
           status?: Database["public"]["Enums"]["session_status"]
@@ -226,10 +230,12 @@ export type Database = {
           id?: string
           interview_type?: Database["public"]["Enums"]["interview_type"]
           interviewer_personality?: Database["public"]["Enums"]["interviewer_personality"]
+          interviewer_voice?: string
           length_minutes?: number
           overall_score?: number | null
           paused_at?: string | null
           paused_seconds?: number
+          playback_rate?: number
           project_id?: string
           started_at?: string | null
           status?: Database["public"]["Enums"]["session_status"]

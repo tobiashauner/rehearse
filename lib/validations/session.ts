@@ -40,6 +40,24 @@ export const LENGTH_OPTIONS = [
   { value: "60", label: "60 minutes" },
 ] as const;
 
+// OpenAI TTS voices, described by feel rather than name so the choice reads
+// as an interviewer trait. Keep `value` aligned with OpenAI's voice ids.
+export const VOICE_OPTIONS = [
+  { value: "alloy", label: "Alloy — neutral, even" },
+  { value: "echo", label: "Echo — warm, measured" },
+  { value: "onyx", label: "Onyx — deep, authoritative" },
+  { value: "nova", label: "Nova — bright, energetic" },
+  { value: "shimmer", label: "Shimmer — soft, calm" },
+  { value: "fable", label: "Fable — expressive, animated" },
+] as const;
+
+export const PLAYBACK_OPTIONS = [
+  { value: "0.75", label: "0.75× — slower" },
+  { value: "1", label: "1× — normal" },
+  { value: "1.25", label: "1.25× — faster" },
+  { value: "1.5", label: "1.5× — fastest" },
+] as const;
+
 export const configureInterviewSchema = z.object({
   interviewType: z.enum(
     INTERVIEW_TYPE_OPTIONS.map((o) => o.value) as [string, ...string[]],
@@ -56,6 +74,13 @@ export const configureInterviewSchema = z.object({
   lengthMinutes: z.coerce.number().refine(
     (n) => LENGTH_OPTIONS.some((o) => Number(o.value) === n),
     "Invalid interview length",
+  ),
+  interviewerVoice: z.enum(
+    VOICE_OPTIONS.map((o) => o.value) as [string, ...string[]],
+  ),
+  playbackRate: z.coerce.number().refine(
+    (n) => PLAYBACK_OPTIONS.some((o) => Number(o.value) === n),
+    "Invalid playback speed",
   ),
 });
 

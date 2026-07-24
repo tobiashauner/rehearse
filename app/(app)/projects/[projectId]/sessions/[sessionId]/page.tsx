@@ -25,7 +25,7 @@ export default async function InterviewSessionPage({
   const { data: session } = await supabase
     .from("interview_sessions")
     .select(
-      "id, status, interview_type, difficulty, interviewer_personality, conversation_mode, length_minutes, created_at",
+      "id, status, interview_type, difficulty, interviewer_personality, conversation_mode, length_minutes, playback_rate, created_at",
     )
     .eq("id", sessionId)
     .eq("project_id", projectId)
@@ -88,6 +88,7 @@ export default async function InterviewSessionPage({
           }
           baseQuestionCount={baseQuestionCount}
           lengthMinutes={session.length_minutes}
+          playbackRate={Number(session.playback_rate) || 1}
           reviewHref={reviewHref}
         />
       )}

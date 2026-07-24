@@ -9,6 +9,7 @@ import { ConfigureInterviewDialog } from "@/components/interview/configure-inter
 import { SessionList } from "@/components/interview/session-list";
 import { CoachingPlanPanel } from "@/components/interview/coaching-plan-panel";
 import { ProjectAnalytics } from "@/components/project/project-analytics";
+import { ProjectSettings } from "@/components/project/project-settings";
 import { SectionTiles } from "@/components/project/section-tiles";
 import { RESOURCE_TYPE_OPTIONS } from "@/lib/validations/resource";
 import {
@@ -163,10 +164,14 @@ export default async function ProjectDetailsPage({
         {section === "analytics" && <ProjectAnalytics projectId={project.id} />}
 
         {section === "settings" && (
-          <p className="max-w-prose text-muted-foreground">
-            Project settings — interviewer voice, playback speed, auto-advance,
-            and recording retention — will live here.
-          </p>
+          <ProjectSettings
+            projectId={project.id}
+            project={{
+              title: project.title,
+              company: project.company,
+              role: project.role,
+            }}
+          />
         )}
       </div>
     );

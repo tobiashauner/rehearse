@@ -63,6 +63,7 @@ export function InterviewRunner({
   status,
   baseQuestionCount,
   lengthMinutes,
+  playbackRate = 1,
   reviewHref,
 }: {
   projectId: string;
@@ -70,6 +71,7 @@ export function InterviewRunner({
   status: "configured" | "in_progress" | "paused" | "completed";
   baseQuestionCount: number;
   lengthMinutes: number;
+  playbackRate?: number;
   reviewHref: string;
 }) {
   const router = useRouter();
@@ -113,6 +115,7 @@ export function InterviewRunner({
       const result = await getQuestionAudio(projectId, sessionId, questionId);
       if (cancelled || !result.url || !audio) return;
       audio.src = result.url;
+      audio.playbackRate = playbackRate;
       setAudioQuestionId(questionId);
       // Autoplay can be blocked before the first gesture; the replay button
       // still works, so swallow the rejection.
@@ -122,7 +125,7 @@ export function InterviewRunner({
       cancelled = true;
       audio?.pause();
     };
-  }, [projectId, sessionId, questionId]);
+  }, [projectId, sessionId, questionId, playbackRate]);
 
   const stopQuestionAudio = useCallback(() => {
     audioRef.current?.pause();

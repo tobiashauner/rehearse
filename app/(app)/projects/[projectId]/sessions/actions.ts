@@ -336,6 +336,8 @@ export async function createInterviewSession(
     interviewerPersonality: string;
     conversationMode: string;
     lengthMinutes: number;
+    interviewerVoice: string;
+    playbackRate: number;
   },
 ) {
   const parsed = configureInterviewSchema.safeParse(values);
@@ -440,6 +442,8 @@ export async function createInterviewSession(
       interviewer_personality: config.interviewerPersonality,
       conversation_mode: config.conversationMode,
       length_minutes: config.lengthMinutes,
+      interviewer_voice: parsed.data.interviewerVoice,
+      playback_rate: parsed.data.playbackRate,
     })
     .select("id")
     .single();

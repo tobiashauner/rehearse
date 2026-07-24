@@ -26,6 +26,8 @@ import {
   INTERVIEW_TYPE_OPTIONS,
   LENGTH_OPTIONS,
   PERSONALITY_OPTIONS,
+  PLAYBACK_OPTIONS,
+  VOICE_OPTIONS,
   configureInterviewSchema,
 } from "@/lib/validations/session";
 import { createInterviewSession } from "@/app/(app)/projects/[projectId]/sessions/actions";
@@ -85,6 +87,10 @@ export function ConfigureInterviewDialog({
     CONVERSATION_MODE_OPTIONS[0].value,
   );
   const [lengthMinutes, setLengthMinutes] = useState<string>(LENGTH_OPTIONS[1].value);
+  const [interviewerVoice, setInterviewerVoice] = useState<string>(
+    VOICE_OPTIONS[0].value,
+  );
+  const [playbackRate, setPlaybackRate] = useState<string>(PLAYBACK_OPTIONS[1].value);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -98,6 +104,8 @@ export function ConfigureInterviewDialog({
       interviewerPersonality,
       conversationMode,
       lengthMinutes: Number(lengthMinutes),
+      interviewerVoice,
+      playbackRate: Number(playbackRate),
     });
     if (!parsed.success) {
       setError(parsed.error.issues[0]?.message ?? "Invalid configuration.");
@@ -167,6 +175,22 @@ export function ConfigureInterviewDialog({
               onChange={setLengthMinutes}
               options={LENGTH_OPTIONS}
             />
+            <div className="grid grid-cols-2 gap-4">
+              <OptionSelect
+                id="interview-voice"
+                label="Interviewer Voice"
+                value={interviewerVoice}
+                onChange={setInterviewerVoice}
+                options={VOICE_OPTIONS}
+              />
+              <OptionSelect
+                id="interview-playback"
+                label="Playback Speed"
+                value={playbackRate}
+                onChange={setPlaybackRate}
+                options={PLAYBACK_OPTIONS}
+              />
+            </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
             <DialogFooter>
               <Button type="submit" disabled={isPending}>

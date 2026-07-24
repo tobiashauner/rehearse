@@ -4,6 +4,24 @@ Dated log of actual work sessions on this app. Add a new entry at the end of eac
 that changes the app (newest at top). Keep entries short — what changed and why, not a
 diff.
 
+## 2026-07-24 — Project settings + per-interview voice/playback
+
+- **Voice + playback moved to interview level** (they were only a settings-tab
+  placeholder, never built; TTS voice was the single `OPENAI_TTS_VOICE` env). New
+  `interviewer_voice` + `playback_rate` columns (migration `20260724174040`);
+  Configure Interview dialog gains a Voice select (6 OpenAI voices, described by
+  feel) + Playback Speed (0.75/1/1.25/1.5×). `getQuestionAudio` uses the session's
+  voice; runner applies the rate to the question audio element. Per-session TTS
+  cache still works (questions belong to one session).
+- **Project settings now real** (`components/project/project-settings.tsx`,
+  replacing the placeholder): rename / edit role / edit company (`updateProject`
+  action, reuses `projectSchema`, empty→null), and a danger-zone delete
+  (`deleteProject`) gated on a typed-name confirmation. Delete relies on the DB
+  cascade for rows and clears storage explicitly first (resource files +
+  interview-audio per session, best-effort), then redirects home. Verified E2E:
+  dialog shows both new selects, rename persists, delete disabled on wrong name /
+  enabled on exact match / removes the project / redirects.
+
 ## 2026-07-24 — Project overview tiles polished
 
 - And: Interview Sessions switched from stacked rows to the same responsive card
