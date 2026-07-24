@@ -81,7 +81,7 @@ export function SessionList({
   }
 
   return (
-    <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(17rem,1fr))]">
+    <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(16rem,1fr))]">
       {sessions.map((session) => (
         <SessionCard
           key={session.id}
