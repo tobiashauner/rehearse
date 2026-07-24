@@ -39,7 +39,7 @@ export function ProjectSidebar({ projectId }: { projectId: string }) {
   return (
     <nav
       aria-label="Project sections"
-      className="flex gap-1 overflow-x-auto md:sticky md:top-24 md:w-48 md:shrink-0 md:flex-col md:self-start md:overflow-visible"
+      className="flex gap-1 overflow-x-auto md:sticky md:top-24 md:w-52 md:shrink-0 md:flex-col md:self-start md:overflow-visible md:pr-6"
     >
       {SECTIONS.map(({ tab, label, icon: Icon }) => {
         const isActive = (currentTab ?? null) === tab;
@@ -51,7 +51,7 @@ export function ProjectSidebar({ projectId }: { projectId: string }) {
             className={cn(
               "flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/50",
               isActive
-                ? "bg-card font-medium text-foreground shadow-resting ring-1 ring-foreground/10"
+                ? "bg-primary/15 font-medium text-foreground"
                 : "text-muted-foreground hover:bg-muted hover:text-foreground",
             )}
           >

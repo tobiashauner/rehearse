@@ -59,9 +59,11 @@ export default async function ProjectLayout({
         <p className="text-muted-foreground">{subtitle}</p>
       </div>
 
-      <div className="flex flex-col gap-6 md:flex-row md:gap-10">
+      <div className="flex flex-col gap-6 md:flex-row md:gap-0">
         <ProjectSidebar projectId={project.id} />
-        <div className="min-w-0 flex-1">{children}</div>
+        <div className="min-w-0 flex-1 md:border-l md:border-border md:pl-10">
+          {children}
+        </div>
       </div>
     </div>
   );
