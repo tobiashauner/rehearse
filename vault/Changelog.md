@@ -6,6 +6,12 @@ diff.
 
 ## 2026-07-24 — Project overview tiles polished
 
+- Also: Resources section switched from stacked rows to a responsive card grid
+  (`auto-fill minmax(16rem,1fr)`), each resource a card with a per-type lucide icon
+  (resume FileUser, JD Briefcase, LinkedIn Contact — lucide has no brand icons —
+  website Globe, notes NotebookPen, etc. — rough pass, swap freely), type badge,
+  content preview, and icon-only Download/Open/Delete actions in the footer.
+
 - `section-tiles.tsx`: petrol icon chips in tile headers (same icons as the rail);
   list items are tinted rounded rows (`bg-muted/60`, no borders — rows, not nested
   cards); session rows show status icon + color (green CircleCheck + score for

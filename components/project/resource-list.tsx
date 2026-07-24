@@ -2,18 +2,23 @@
 
 import { useTransition } from "react";
 import { toast } from "sonner";
-import { AlignLeft, FileText, Link2 } from "lucide-react";
+import {
+  Briefcase,
+  Download,
+  ExternalLink,
+  FileSignature,
+  FileText,
+  FileUser,
+  Globe,
+  Contact,
+  Images,
+  NotebookPen,
+  Trash2,
+  UserSearch,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Item,
-  ItemActions,
-  ItemContent,
-  ItemDescription,
-  ItemGroup,
-  ItemMedia,
-  ItemTitle,
-} from "@/components/ui/item";
 import {
   Empty,
   EmptyDescription,
@@ -34,17 +39,18 @@ const LABELS = Object.fromEntries(
   RESOURCE_TYPE_OPTIONS.map((opt) => [opt.value, opt.label]),
 );
 
-const KIND_ICONS = {
-  file: <FileText />,
-  text: <AlignLeft />,
-  url: <Link2 />,
-  text_or_url: <Link2 />,
-} as const;
-
-function resourceIcon(type: string) {
-  const kind = RESOURCE_TYPE_OPTIONS.find((opt) => opt.value === type)?.kind;
-  return KIND_ICONS[kind ?? "text"];
-}
+// Rough first pass at per-type icons — swap freely.
+const TYPE_ICONS: Record<string, LucideIcon> = {
+  resume: FileUser,
+  cover_letter: FileSignature,
+  portfolio_pdf: Images,
+  job_description: Briefcase,
+  linkedin_url: Contact,
+  company_website: Globe,
+  hiring_manager_linkedin: UserSearch,
+  personal_notes: NotebookPen,
+  other_pdf: FileText,
+};
 
 export function ResourceList({
   projectId,
@@ -70,19 +76,19 @@ export function ResourceList({
   }
 
   return (
-    <ItemGroup className="gap-0 divide-y divide-border rounded-lg border">
+    <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(16rem,1fr))]">
       {resources.map((resource) => (
-        <ResourceRow
+        <ResourceCard
           key={resource.id}
           projectId={projectId}
           resource={resource}
         />
       ))}
-    </ItemGroup>
+    </div>
   );
 }
 
-function ResourceRow({
+function ResourceCard({
   projectId,
   resource,
 }: {
@@ -90,6 +96,7 @@ function ResourceRow({
   resource: Resource;
 }) {
   const [isPending, startTransition] = useTransition();
+  const Icon = TYPE_ICONS[resource.type] ?? FileText;
 
   function handleDownload() {
     const storagePath = resource.storage_path;
@@ -113,50 +120,69 @@ function ResourceRow({
   }
 
   return (
-    <Item className="rounded-none border-none">
-      <ItemMedia variant="icon">{resourceIcon(resource.type)}</ItemMedia>
-      <ItemContent>
-        <ItemTitle>
-          <Badge variant="accent">{LABELS[resource.type] ?? resource.type}</Badge>
-          <span className="truncate">{resource.name || resource.url || "Untitled"}</span>
-        </ItemTitle>
+    <div className="flex flex-col gap-3 rounded-xl bg-card p-4 shadow-resting ring-1 ring-foreground/10">
+      <div className="flex items-start justify-between gap-2">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-badge-accent/10 text-badge-accent">
+          <Icon className="size-4.5" />
+        </span>
+        <Badge variant="accent">{LABELS[resource.type] ?? resource.type}</Badge>
+      </div>
+
+      <div className="min-w-0">
+        <p className="truncate font-medium">
+          {resource.name || resource.url || "Untitled"}
+        </p>
         {resource.content && !resource.storage_path && (
-          <ItemDescription className="line-clamp-1">{resource.content}</ItemDescription>
+          <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+            {resource.content}
+          </p>
         )}
-        <ItemDescription className="text-xs">
+      </div>
+
+      <div className="mt-auto flex items-center justify-between gap-2 border-t pt-3">
+        <span className="text-xs text-muted-foreground">
           Added {new Date(resource.created_at).toLocaleDateString()}
-        </ItemDescription>
-      </ItemContent>
-      <ItemActions>
-        {resource.storage_path && (
+        </span>
+        <div className="flex items-center gap-0.5">
+          {resource.storage_path && (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              disabled={isPending}
+              onClick={handleDownload}
+              aria-label="Download"
+              title="Download"
+            >
+              <Download />
+            </Button>
+          )}
+          {resource.url && (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              disabled={isPending}
+              onClick={() =>
+                window.open(resource.url!, "_blank", "noopener,noreferrer")
+              }
+              aria-label="Open link"
+              title="Open link"
+            >
+              <ExternalLink />
+            </Button>
+          )}
           <Button
-            variant="outline"
-            size="sm"
+            variant="ghost"
+            size="icon-sm"
             disabled={isPending}
-            onClick={handleDownload}
+            onClick={handleDelete}
+            aria-label="Delete"
+            title="Delete"
+            className="text-muted-foreground hover:text-destructive"
           >
-            Download
+            <Trash2 />
           </Button>
-        )}
-        {resource.url && (
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={isPending}
-            onClick={() => window.open(resource.url!, "_blank", "noopener,noreferrer")}
-          >
-            Open
-          </Button>
-        )}
-        <Button
-          variant="ghost"
-          size="sm"
-          disabled={isPending}
-          onClick={handleDelete}
-        >
-          Delete
-        </Button>
-      </ItemActions>
-    </Item>
+        </div>
+      </div>
+    </div>
   );
 }
