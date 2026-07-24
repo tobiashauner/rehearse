@@ -6,6 +6,13 @@ diff.
 
 ## 2026-07-24 — Project overview tiles polished
 
+- And: Interview Sessions switched from stacked rows to the same responsive card
+  grid (`session-list.tsx`) — each session a card with a Mic chip, type title,
+  difficulty + personality badges, and a top-right state indicator sharing the
+  overview tiles' status language: amber score circle for completed, amber
+  CirclePause "Paused", petrol Mic "In progress", muted CircleDashed "Ready to
+  start". Footer shows completed/added date + length. Query already returned
+  overall_score/completed_at.
 - Also: Resources section switched from stacked rows to a responsive card grid
   (`auto-fill minmax(16rem,1fr)`), each resource a card with a per-type lucide icon
   (resume FileUser, JD Briefcase, LinkedIn Contact — lucide has no brand icons —

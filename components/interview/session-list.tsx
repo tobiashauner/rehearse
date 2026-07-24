@@ -1,14 +1,13 @@
 import Link from "next/link";
-import { Mic } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import {
-  Item,
-  ItemContent,
-  ItemDescription,
-  ItemGroup,
-  ItemMedia,
-  ItemTitle,
-} from "@/components/ui/item";
+  CircleCheck,
+  CircleDashed,
+  CirclePause,
+  Mic,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 import {
   Empty,
   EmptyDescription,
@@ -32,8 +31,33 @@ type Session = Pick<
   | "difficulty"
   | "interviewer_personality"
   | "length_minutes"
+  | "overall_score"
+  | "completed_at"
   | "created_at"
 >;
+
+// Muted green for "completed" — a state, not a grade, so it stays calm and
+// matches the overview tiles' session rows.
+const COMPLETE_GREEN = "text-[oklch(0.55_0.12_150)]";
+
+const STATUS: Record<
+  string,
+  { icon: LucideIcon; label: string; className: string }
+> = {
+  completed: { icon: CircleCheck, label: "Completed", className: COMPLETE_GREEN },
+  paused: { icon: CirclePause, label: "Paused", className: "text-primary" },
+  in_progress: { icon: Mic, label: "In progress", className: "text-badge-accent" },
+  configured: {
+    icon: CircleDashed,
+    label: "Ready to start",
+    className: "text-muted-foreground",
+  },
+  abandoned: {
+    icon: CircleDashed,
+    label: "Abandoned",
+    className: "text-muted-foreground",
+  },
+};
 
 export function SessionList({
   projectId,
@@ -57,34 +81,81 @@ export function SessionList({
   }
 
   return (
-    <ItemGroup className="gap-0 divide-y divide-border rounded-lg border">
+    <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(17rem,1fr))]">
       {sessions.map((session) => (
-        <Item
+        <SessionCard
           key={session.id}
-          className="rounded-none border-none"
-          render={<Link href={`/projects/${projectId}/sessions/${session.id}`} />}
-        >
-          <ItemMedia variant="icon">
-            <Mic />
-          </ItemMedia>
-          <ItemContent>
-            <ItemTitle>
-              <span>{optionLabel(INTERVIEW_TYPE_OPTIONS, session.interview_type)}</span>
-              <Badge variant="accent">
-                {optionLabel(DIFFICULTY_OPTIONS, session.difficulty)}
-              </Badge>
-              <Badge variant="outline" className="capitalize">
-                {session.status}
-              </Badge>
-            </ItemTitle>
-            <ItemDescription>
-              {optionLabel(PERSONALITY_OPTIONS, session.interviewer_personality)}{" "}
-              interviewer · {session.length_minutes} min · Added{" "}
-              {new Date(session.created_at).toLocaleDateString()}
-            </ItemDescription>
-          </ItemContent>
-        </Item>
+          projectId={projectId}
+          session={session}
+        />
       ))}
-    </ItemGroup>
+    </div>
+  );
+}
+
+function SessionCard({
+  projectId,
+  session,
+}: {
+  projectId: string;
+  session: Session;
+}) {
+  const status = STATUS[session.status] ?? STATUS.configured;
+  const StatusIcon = status.icon;
+  const score =
+    session.status === "completed" && session.overall_score !== null
+      ? Math.round(Number(session.overall_score))
+      : null;
+
+  const dateLabel =
+    session.status === "completed" && session.completed_at
+      ? `Completed ${new Date(session.completed_at).toLocaleDateString()}`
+      : `Added ${new Date(session.created_at).toLocaleDateString()}`;
+
+  return (
+    <Link
+      href={`/projects/${projectId}/sessions/${session.id}`}
+      className="group flex flex-col gap-3 rounded-xl bg-card p-4 shadow-resting ring-1 ring-foreground/10 outline-none transition-colors hover:bg-accent focus-visible:ring-3 focus-visible:ring-ring/50"
+    >
+      <div className="flex items-start justify-between gap-2">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-badge-accent/10 text-badge-accent">
+          <Mic className="size-4.5" />
+        </span>
+        {score !== null ? (
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-sm font-semibold text-primary tabular-nums">
+            {score}
+          </span>
+        ) : (
+          <span
+            className={cn(
+              "flex items-center gap-1.5 text-xs font-medium",
+              status.className,
+            )}
+          >
+            <StatusIcon className="size-4" />
+            {status.label}
+          </span>
+        )}
+      </div>
+
+      <div className="min-w-0">
+        <p className="font-medium">
+          {optionLabel(INTERVIEW_TYPE_OPTIONS, session.interview_type)}
+        </p>
+        <div className="mt-1.5 flex flex-wrap gap-1.5">
+          <Badge variant="accent">
+            {optionLabel(DIFFICULTY_OPTIONS, session.difficulty)}
+          </Badge>
+          <Badge variant="outline">
+            {optionLabel(PERSONALITY_OPTIONS, session.interviewer_personality)}
+          </Badge>
+        </div>
+      </div>
+
+      <div className="mt-auto flex items-center justify-between gap-2 border-t pt-3 text-xs text-muted-foreground">
+        <span>{dateLabel}</span>
+        <span>{session.length_minutes} min</span>
+      </div>
+    </Link>
   );
 }
