@@ -106,49 +106,47 @@ export default async function ProjectDetailsPage({
   // ---- Section view -----------------------------------------------------
 
   if (section) {
+    const sectionAction =
+      section === "resources" ? (
+        <AddResourceDialog projectId={project.id} />
+      ) : section === "briefing" ? (
+        <GenerateBriefingButton
+          projectId={project.id}
+          hasBriefing={!!briefing}
+          hasResources={hasAnyResource}
+        />
+      ) : section === "sessions" ? (
+        <ConfigureInterviewDialog
+          projectId={project.id}
+          hasBriefing={!!briefing}
+          completedSessionCount={completedSessions.length}
+        />
+      ) : null;
+
     return (
       <div className="space-y-8">
-        <h2 className="text-2xl font-medium">{SECTION_TITLES[section]}</h2>
+        <div className="flex items-center justify-between gap-4">
+          <h2 className="text-2xl font-medium">{SECTION_TITLES[section]}</h2>
+          {sectionAction}
+        </div>
 
         {section === "resources" && (
-          <div className="space-y-6">
-            <div className="flex justify-end">
-              <AddResourceDialog projectId={project.id} />
-            </div>
-            <ResourceList projectId={project.id} resources={resources ?? []} />
-          </div>
+          <ResourceList projectId={project.id} resources={resources ?? []} />
         )}
 
-        {section === "briefing" && (
-          <div className="space-y-6">
-            <div className="flex justify-end">
-              <GenerateBriefingButton
-                projectId={project.id}
-                hasBriefing={!!briefing}
-                hasResources={hasAnyResource}
-              />
-            </div>
-            {analysis ? (
-              <AiBriefingView analysis={analysis} />
-            ) : (
-              <AiBriefingOnboarding
-                hasResume={hasResume}
-                hasJobDescription={hasJobDescription}
-                hasAnyResource={hasAnyResource}
-              />
-            )}
-          </div>
-        )}
+        {section === "briefing" &&
+          (analysis ? (
+            <AiBriefingView analysis={analysis} />
+          ) : (
+            <AiBriefingOnboarding
+              hasResume={hasResume}
+              hasJobDescription={hasJobDescription}
+              hasAnyResource={hasAnyResource}
+            />
+          ))}
 
         {section === "sessions" && (
           <div className="space-y-6">
-            <div className="flex justify-end">
-              <ConfigureInterviewDialog
-                projectId={project.id}
-                hasBriefing={!!briefing}
-                completedSessionCount={completedSessions.length}
-              />
-            </div>
             <CoachingPlanPanel
               projectId={project.id}
               plan={

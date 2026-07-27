@@ -39,7 +39,7 @@ export function ProjectSidebar({ projectId }: { projectId: string }) {
   return (
     <nav
       aria-label="Project sections"
-      className="flex gap-1 overflow-x-auto md:sticky md:top-24 md:w-52 md:shrink-0 md:flex-col md:self-start md:overflow-visible md:pr-6"
+      className="flex gap-1 overflow-x-auto md:sticky md:top-[7.5rem] md:w-52 md:shrink-0 md:flex-col md:self-start md:overflow-visible md:pr-6"
     >
       {SECTIONS.map(({ tab, label, icon: Icon }) => {
         const isActive = (currentTab ?? null) === tab;
