@@ -37,7 +37,7 @@ function SectionTile({
   return (
     <Link
       href={href}
-      className="group flex flex-col gap-3 rounded-xl bg-card p-5 shadow-resting ring-1 ring-foreground/10 outline-none transition-colors hover:bg-accent focus-visible:ring-3 focus-visible:ring-ring/50"
+      className="group flex flex-col gap-3 rounded-xl bg-card p-5 shadow-resting ring-1 ring-foreground/10 outline-none transition-colors hover:bg-muted hover:ring-primary focus-visible:ring-3 focus-visible:ring-ring/50"
     >
       <div className="flex items-center gap-2.5">
         <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-badge-accent/10 text-badge-accent">
