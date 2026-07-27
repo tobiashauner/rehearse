@@ -19,6 +19,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   Empty,
   EmptyDescription,
@@ -111,12 +112,16 @@ function ResourceCard({
     });
   }
 
-  function handleDelete() {
-    if (!confirm(`Delete "${resource.name ?? LABELS[resource.type]}"?`)) return;
-    startTransition(async () => {
-      const result = await deleteResource(projectId, resource.id);
-      if (result?.error) toast.error(result.error);
-    });
+  const resourceName =
+    resource.name || resource.url || LABELS[resource.type] || "this resource";
+
+  async function handleDelete() {
+    const result = await deleteResource(projectId, resource.id);
+    if (result?.error) {
+      toast.error(result.error);
+      // Keep the confirmation dialog open so the user can retry.
+      throw new Error(result.error);
+    }
   }
 
   return (
@@ -170,17 +175,25 @@ function ResourceCard({
               <ExternalLink />
             </Button>
           )}
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            disabled={isPending}
-            onClick={handleDelete}
-            aria-label="Delete"
-            title="Delete"
-            className="text-muted-foreground hover:text-destructive"
-          >
-            <Trash2 />
-          </Button>
+          <ConfirmDialog
+            variant="destructive"
+            title={`Delete “${resourceName}”?`}
+            description="This removes the resource from the project. Interviews already built from it aren't affected. This can't be undone."
+            confirmLabel="Delete"
+            onConfirm={handleDelete}
+            trigger={
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                disabled={isPending}
+                aria-label="Delete"
+                title="Delete"
+                className="text-muted-foreground hover:text-destructive"
+              >
+                <Trash2 />
+              </Button>
+            }
+          />
         </div>
       </div>
     </div>
