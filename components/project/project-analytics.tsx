@@ -23,7 +23,9 @@ export async function ProjectAnalytics({ projectId }: { projectId: string }) {
 
   const { data: sessions } = await supabase
     .from("interview_sessions")
-    .select("id, overall_score, completed_at, duration_seconds")
+    .select(
+      "id, overall_score, completed_at, duration_seconds, interview_type, difficulty",
+    )
     .eq("project_id", projectId)
     .eq("status", "completed");
   const completed = sessions ?? [];
@@ -51,7 +53,13 @@ export async function ProjectAnalytics({ projectId }: { projectId: string }) {
       (a, b) =>
         new Date(a.completed_at).getTime() - new Date(b.completed_at).getTime(),
     )
-    .map((s) => ({ score: Number(s.overall_score), completedAt: s.completed_at }));
+    .map((s) => ({
+      score: Number(s.overall_score),
+      completedAt: s.completed_at,
+      interviewType: s.interview_type,
+      difficulty: s.difficulty,
+      durationSeconds: s.duration_seconds,
+    }));
 
   const thisWeek = startOfWeek(new Date());
   const totalSeconds = completed.reduce(

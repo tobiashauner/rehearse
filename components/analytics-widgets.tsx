@@ -5,9 +5,12 @@ import {
   EmptyTile,
   ScoresIllustration,
   Tile,
-  TrendChart,
   TrendIllustration,
 } from "@/components/tiles";
+import {
+  ScoreTrendChart,
+  type ScoreTrendPoint,
+} from "@/components/score-trend-chart";
 
 /*
  * Analytics page widgets, built from the data the pipeline actually
@@ -121,11 +124,7 @@ function AnswerLengthTile({
   );
 }
 
-function ScoreTrendTile({
-  scores,
-}: {
-  scores: { score: number; completedAt: string }[];
-}) {
+function ScoreTrendTile({ scores }: { scores: ScoreTrendPoint[] }) {
   if (scores.length < 2) {
     return (
       <EmptyTile
@@ -141,15 +140,34 @@ function ScoreTrendTile({
       </EmptyTile>
     );
   }
+  const first = Math.round(scores[0].score);
+  const latest = Math.round(scores[scores.length - 1].score);
+  const delta = latest - first;
   return (
     <Tile
       title="Score trend"
       span="lg:col-span-2"
-      caption={`Overall scores across your last ${scores.length} interviews.`}
+      caption={`Hover any point for that interview. ${scores.length} interviews, ${
+        delta === 0
+          ? "flat overall"
+          : `${delta > 0 ? "up" : "down"} ${Math.abs(delta)} since the first`
+      }.`}
     >
-      <TrendChart
-        points={scores.map((s) => ({ score: s.score, date: s.completedAt }))}
-      />
+      <div className="flex items-baseline gap-3">
+        <p className="text-3xl font-medium tabular-nums">{latest}</p>
+        <span className="text-sm text-muted-foreground">latest</span>
+        {delta !== 0 && (
+          <span
+            className={`text-sm font-medium tabular-nums ${
+              delta > 0 ? "text-badge-accent" : "text-destructive"
+            }`}
+          >
+            {delta > 0 ? "+" : "−"}
+            {Math.abs(delta)}
+          </span>
+        )}
+      </div>
+      <ScoreTrendChart points={scores} />
     </Tile>
   );
 }
@@ -214,7 +232,7 @@ export function AnalyticsWidgets({
   answerCount,
   weeks,
 }: {
-  scored: { score: number; completedAt: string }[];
+  scored: ScoreTrendPoint[];
   totalSeconds: number;
   weekSeconds: number;
   avgWords: number | null;

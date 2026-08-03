@@ -4,6 +4,27 @@ Dated log of actual work sessions on this app. Add a new entry at the end of eac
 that changes the app (newest at top). Keep entries short — what changed and why, not a
 diff.
 
+## 2026-08-02 — Score-trend chart upgraded to Recharts
+
+- **Analytics "Score trend" is now a real charting-library graph** (`recharts@3`,
+  React-19-compatible). Replaced the hand-rolled SVG `TrendChart` (still used by the
+  unused legacy `dashboard-widgets.tsx`, left as-is) with a new client component
+  `components/score-trend-chart.tsx`: honest time-spaced x-axis with a labelled tick
+  per interview, a dot on every completed interview, snapped round-number y
+  gridlines, a dashed average reference line, and a crosshair + rich hover tooltip
+  (date · score/100 · interview type · difficulty · duration). Tile gained a
+  latest/delta header ("82 · +25"). Single series → no legend, per dataviz rules;
+  petrol line + all colors are CSS tokens so light/dark come from the theme (verified
+  both). To feed the tooltip, `project-analytics.tsx` now also selects
+  `interview_type` + `difficulty` and passes them (plus duration) through
+  `AnalyticsWidgets` as `ScoreTrendPoint[]`. See [[Decisions/0024-recharts-for-charts]].
+- **Sample data**: added `scripts/seed-sample-project.mjs` (re-runnable, self-cleaning)
+  that builds a fully-populated demo project — resources, briefing, four completed
+  interviews with an improving 57→82 trend across four weeks (full transcripts +
+  per-answer feedback + debriefs), a coaching plan, and one ready-to-start session —
+  so the multi-interview UX (incl. this chart) can be seen without real interviews.
+  `SEED_USER_EMAIL` env overrides the target account.
+
 ## 2026-07-24 — Project settings + per-interview voice/playback
 
 - **Voice + playback moved to interview level** (they were only a settings-tab
