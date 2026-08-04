@@ -49,13 +49,21 @@ The IA is project-centric (see
 [[Decisions/0018-project-centric-ia-no-global-nav|0018]]): `/` is the single project
 pane (metric tiles + resume-interview banner); everything else lives under
 `/projects/[projectId]`. Inside a project, `[projectId]/layout.tsx` mounts a
-project-scoped **section rail** (`project-sidebar.tsx`; pills on mobile, includes
-"← All projects"), the default page view is a grid of per-section **summary tiles**
-(`section-tiles.tsx`), and `?tab=<section>`
-(resources/briefing/sessions/analytics/settings) shows one section full-page (see
-[[Decisions/0020-project-rail-and-summary-tiles|0020]]; the param keeps the old `tab`
-name for link compatibility). `/projects`, `/analytics`, and `/settings` are redirects
-to `/` — don't add new top-level surfaces without revisiting 0018.
+horizontal **section nav** + a persistent interview rail (as of 2026-08-03,
+[[Decisions/0028-top-nav-and-interview-rail]]). `[projectId]/layout.tsx` renders: the
+pinned header (title + `project-top-nav.tsx`, a teal pill nav over Overview / Resources /
+AI Briefing / Settings), then `project-shell.tsx` which lays out the body — Overview and
+interview (session/review) routes get the **persistent `interview-rail.tsx`** on the left
+(interview cards, highlights the open one, "New Interview" on top) + detail on the right;
+the focused sections render full-width. The default (no `?tab=`) detail is the **Overview
+dashboard** (`project-dashboard.tsx`) — score progression + highlights, coaching plan,
+practice stats (interviews live in the rail now). The old Interview Sessions + Analytics
+tabs are folded in; `section-tiles.tsx`, `project-analytics.tsx`, `project-sidebar.tsx`,
+and `session-list.tsx` were deleted; analytics computation is in `lib/analytics.ts`.
+`?tab=<section>` shows resources/briefing/settings; retired `?tab=sessions|analytics`
+links fall through to the dashboard. `/projects`, `/analytics`,
+and `/settings` are redirects to `/` — don't add new top-level surfaces without
+revisiting [[Decisions/0018-project-centric-ia-no-global-nav|0018]].
 
 ## Components
 
@@ -70,16 +78,20 @@ to `/` — don't add new top-level surfaces without revisiting 0018.
   `cmdk`-backed components (`command`) need their own `<Command>` root even inside
   `CommandDialog` — see [[Decisions/0010-command-palette-needs-explicit-command-root]].
 - `components/project/`, `components/interview/` — feature-specific, per the spec's folder
-  structure. Lists in both (`resource-list.tsx`, `session-list.tsx`) use
-  `ItemGroup`/`Item` rows, not hand-rolled `<ul><li>`; empty states use `Empty`.
+  structure. `resource-list.tsx` uses `ItemGroup`/`Item` rows (not hand-rolled `<ul><li>`)
+  with `Empty` empty states; interviews are the left rail (`interview-rail.tsx`).
 - `components/app-header.tsx` — the entire app shell (logo linking home, search pill
   that opens the command palette, `Avatar` + name + `DropdownMenu` sign-out). There is
   no sidebar anymore — see [[Decisions/0018-project-centric-ia-no-global-nav|0018]];
   `components/app-sidebar.tsx` and `components/dashboard-widgets.tsx` are retired but
   kept on disk until a git baseline commit exists.
 - `components/project/project-tile.tsx` + `Sparkline` in `components/tiles.tsx` — the
-  home pane's metric tiles; `components/project/project-analytics.tsx` is the
-  project-scoped Analytics tab (server component wrapping `AnalyticsWidgets`).
+  home pane's metric tiles. The project Overview is `components/project/project-dashboard.tsx`
+  (server component; composes the `analytics-widgets.tsx` tiles + `ScoreTrendChart` and
+  `CoachingPlanPanel`), fed by `lib/analytics.ts`; interviews + New Interview are the
+  layout's `interview-rail.tsx`. Score UI lives in `score-gauge.tsx` / `score-badge.tsx` /
+  `score-explainer.tsx` (from `lib/scoring.ts`); the review-page Delivery panel is
+  `delivery-panel.tsx` (from `lib/delivery.ts`).
 - `components/command-menu.tsx` — Cmd+K command palette, project-centric: fetches the
   project list with the browser Supabase client each time it opens (jump-to-project +
   "New Project"). A controlled component (`open`/`onOpenChange` props) since both the

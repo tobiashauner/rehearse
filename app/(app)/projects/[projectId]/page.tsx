@@ -5,32 +5,21 @@ import { ResourceList } from "@/components/project/resource-list";
 import { GenerateBriefingButton } from "@/components/interview/generate-briefing-button";
 import { AiBriefingView } from "@/components/interview/ai-briefing-view";
 import { AiBriefingOnboarding } from "@/components/interview/ai-briefing-onboarding";
-import { ConfigureInterviewDialog } from "@/components/interview/configure-interview-dialog";
-import { SessionList } from "@/components/interview/session-list";
-import { CoachingPlanPanel } from "@/components/interview/coaching-plan-panel";
-import { ProjectAnalytics } from "@/components/project/project-analytics";
 import { ProjectSettings } from "@/components/project/project-settings";
-import { SectionTiles } from "@/components/project/section-tiles";
-import { RESOURCE_TYPE_OPTIONS } from "@/lib/validations/resource";
-import {
-  INTERVIEW_TYPE_OPTIONS,
-  optionLabel,
-} from "@/lib/validations/session";
+import { ProjectDashboard } from "@/components/project/project-dashboard";
 import type { ProjectAnalysis } from "@/lib/prompts/project-analysis";
-import type { CoachingPlan } from "@/lib/prompts/coaching-plan";
 
 /*
- * Project page. The default view is the overview: a compact summary tile per
- * section. ?tab=<section> renders that single section; the section rail in
- * the project layout carries navigation (the param is still named `tab` so
- * older deep links keep working).
+ * Project page. The default view (no ?tab=) is the Overview dashboard, which
+ * folds in what used to be the separate Interview Sessions and Analytics tabs.
+ * ?tab=<section> renders one of the remaining focused sections. The section
+ * rail in the project layout carries navigation (param still named `tab` so
+ * older deep links keep working — retired tabs fall through to the dashboard).
  */
 
 const SECTION_TITLES: Record<string, string> = {
   resources: "Resources",
   briefing: "AI Briefing",
-  sessions: "Interview Sessions",
-  analytics: "Analytics",
   settings: "Settings",
 };
 
@@ -56,6 +45,13 @@ export default async function ProjectDetailsPage({
     notFound();
   }
 
+  // ---- Overview: the single dashboard (fetches its own data) -------------
+  if (!section) {
+    return <ProjectDashboard projectId={project.id} />;
+  }
+
+  // ---- Focused sections: resources / briefing / settings -----------------
+
   const { data: resources } = await supabase
     .from("resources")
     .select("id, project_id, type, name, storage_path, url, content, created_at")
@@ -70,169 +66,55 @@ export default async function ProjectDetailsPage({
     .limit(1)
     .maybeSingle();
 
-  const { data: sessions } = await supabase
-    .from("interview_sessions")
-    .select(
-      "id, status, interview_type, difficulty, interviewer_personality, length_minutes, overall_score, duration_seconds, completed_at, created_at",
-    )
-    .eq("project_id", projectId)
-    .order("created_at", { ascending: false });
-
-  const { data: coachingPlan } = await supabase
-    .from("coaching_plans")
-    .select("recommendations, generated_at")
-    .eq("project_id", projectId)
-    .order("generated_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
   const RESUME_LIKE_TYPES = ["resume", "cover_letter", "portfolio_pdf", "personal_notes"];
   const hasResume = (resources ?? []).some((r) => RESUME_LIKE_TYPES.includes(r.type));
   const hasJobDescription = (resources ?? []).some((r) => r.type === "job_description");
   const hasAnyResource = (resources ?? []).length > 0;
-
-  const allSessions = sessions ?? [];
-  const completedSessions = allSessions.filter((s) => s.status === "completed");
-  const scores = completedSessions
-    .filter((s) => s.overall_score !== null && s.completed_at !== null)
-    .sort(
-      (a, b) =>
-        new Date(a.completed_at!).getTime() - new Date(b.completed_at!).getTime(),
-    )
-    .map((s) => Number(s.overall_score));
-
   const analysis = briefing?.content as ProjectAnalysis | undefined;
 
-  // ---- Section view -----------------------------------------------------
-
-  if (section) {
-    const sectionAction =
-      section === "resources" ? (
-        <AddResourceDialog projectId={project.id} />
-      ) : section === "briefing" ? (
-        <GenerateBriefingButton
-          projectId={project.id}
-          hasBriefing={!!briefing}
-          hasResources={hasAnyResource}
-        />
-      ) : section === "sessions" ? (
-        <ConfigureInterviewDialog
-          projectId={project.id}
-          hasBriefing={!!briefing}
-          completedSessionCount={completedSessions.length}
-        />
-      ) : null;
-
-    return (
-      <div className="space-y-8">
-        <div className="flex items-center justify-between gap-4">
-          <h2 className="text-2xl font-medium">{SECTION_TITLES[section]}</h2>
-          {sectionAction}
-        </div>
-
-        {section === "resources" && (
-          <ResourceList projectId={project.id} resources={resources ?? []} />
-        )}
-
-        {section === "briefing" &&
-          (analysis ? (
-            <AiBriefingView analysis={analysis} />
-          ) : (
-            <AiBriefingOnboarding
-              hasResume={hasResume}
-              hasJobDescription={hasJobDescription}
-              hasAnyResource={hasAnyResource}
-            />
-          ))}
-
-        {section === "sessions" && (
-          <div className="space-y-6">
-            <CoachingPlanPanel
-              projectId={project.id}
-              plan={
-                (coachingPlan?.recommendations as CoachingPlan | undefined) ?? null
-              }
-              generatedAt={coachingPlan?.generated_at ?? null}
-              completedSessionCount={completedSessions.length}
-            />
-            <SessionList projectId={project.id} sessions={allSessions} />
-          </div>
-        )}
-
-        {section === "analytics" && <ProjectAnalytics projectId={project.id} />}
-
-        {section === "settings" && (
-          <ProjectSettings
-            projectId={project.id}
-            project={{
-              title: project.title,
-              company: project.company,
-              role: project.role,
-            }}
-          />
-        )}
-      </div>
-    );
-  }
-
-  // ---- Overview: compact summary tile per section -----------------------
-  // (The project title lives in the layout header, above the rail.)
+  const sectionAction =
+    section === "resources" ? (
+      <AddResourceDialog projectId={project.id} />
+    ) : section === "briefing" ? (
+      <GenerateBriefingButton
+        projectId={project.id}
+        hasBriefing={!!briefing}
+        hasResources={hasAnyResource}
+      />
+    ) : null;
 
   return (
     <div className="space-y-8">
-      <SectionTiles
-        projectId={project.id}
-        hasAnyResource={hasAnyResource}
-        resources={{
-          count: (resources ?? []).length,
-          items: (resources ?? []).map((r) => ({
-            primary: r.name || optionLabel(RESOURCE_TYPE_OPTIONS, r.type),
-            secondary: r.name
-              ? optionLabel(RESOURCE_TYPE_OPTIONS, r.type)
-              : undefined,
-          })),
-        }}
-        briefing={
-          analysis && briefing
-            ? {
-                generatedAt: briefing.generated_at,
-                roleSummary: analysis.roleSummary,
-                skills: analysis.requiredSkills ?? [],
-              }
-            : null
-        }
-        sessions={{
-          count: allSessions.length,
-          inProgressCount: allSessions.filter(
-            (s) => s.status === "in_progress" || s.status === "paused",
-          ).length,
-          latestScore: scores.at(-1) ?? null,
-          hasCoachingPlan: !!coachingPlan,
-          recent: allSessions.map((s) => ({
-            primary: optionLabel(INTERVIEW_TYPE_OPTIONS, s.interview_type),
-            status: s.status,
-            score:
-              s.status === "completed" && s.overall_score !== null
-                ? Math.round(Number(s.overall_score))
-                : null,
-          })),
-        }}
-        analytics={
-          scores.length > 0
-            ? {
-                scores,
-                averageScore:
-                  scores.reduce((a, b) => a + b, 0) / scores.length,
-                totalMinutes: Math.round(
-                  completedSessions.reduce(
-                    (sum, s) => sum + (s.duration_seconds ?? 0),
-                    0,
-                  ) / 60,
-                ),
-              }
-            : null
-        }
-      />
+      <div className="flex items-center justify-between gap-4">
+        <h2 className="text-2xl font-medium">{SECTION_TITLES[section]}</h2>
+        {sectionAction}
+      </div>
+
+      {section === "resources" && (
+        <ResourceList projectId={project.id} resources={resources ?? []} />
+      )}
+
+      {section === "briefing" &&
+        (analysis ? (
+          <AiBriefingView analysis={analysis} />
+        ) : (
+          <AiBriefingOnboarding
+            hasResume={hasResume}
+            hasJobDescription={hasJobDescription}
+            hasAnyResource={hasAnyResource}
+          />
+        ))}
+
+      {section === "settings" && (
+        <ProjectSettings
+          projectId={project.id}
+          project={{
+            title: project.title,
+            company: project.company,
+            role: project.role,
+          }}
+        />
+      )}
     </div>
   );
 }

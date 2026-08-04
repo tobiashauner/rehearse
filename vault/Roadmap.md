@@ -25,12 +25,22 @@ Also tracked, not part of the 8 but needed for a usable app:
   deliberate divergence, recorded in 0018.
 - ❌ Google/GitHub OAuth (manual dashboard config needed — see [[Backend]])
 - ✅ AI Briefing tab (manual "Generate Briefing" button — see [[Decisions/0008-ai-briefing-required-before-interview-generation]])
-- ✅ Analytics — now the per-project Analytics tab (average score, practice time, answer
-  length, score trend, practice cadence — live from real data, illustrated empty states
-  otherwise; global `/analytics` redirects home). The spec's
-  STAR/confidence/leadership/communication trends are NOT built: the evaluation schema
-  doesn't emit those dimensions yet. "Practice streak" deliberately skipped (PRODUCT.md
-  bans streak mechanics); "practice cadence" bars are the calm equivalent.
+- ✅ Analytics — **folded into the single Overview dashboard** as of 2026-08-03 (no longer
+  a separate tab; see [[Decisions/0027-single-overview-dashboard]]): score progression
+  (Recharts trend chart, tier-colored), average score, a **project-wide delivery summary**
+  (avg delivery score + trend + per-dimension meters — replaced the low-value "answer
+  length" tile) — live from real data, illustrated empty states otherwise; global
+  `/analytics` redirects home. **Practice tracking moved to the home page** as a
+  cross-project punch-card (2026-08-04, [[Decisions/0029-practice-punchcard-at-home]]).
+  The spec's STAR/confidence/leadership/communication trends are still NOT built (the
+  evaluation schema doesn't emit those). "Practice streak" deliberately skipped (PRODUCT.md
+  bans streak mechanics) — the punch-card is the calm, non-gamified equivalent.
+- ✅ Score transparency + tiers ([[Decisions/0025-score-display-system]]) — a coaching
+  tier scale, a radial gauge, tier colors everywhere, and a "How is this scored?"
+  explainer.
+- ✅ Delivery (Tier-1 EQ) analysis ([[Decisions/0026-delivery-analysis-baked-into-score]])
+  — pace / fillers / hedging / ownership, folded into the score at 15% and shown on the
+  review page. Tiers 2–3 (word-timestamp fillers, mic volume, audio-LLM tone) not built.
 - ❌ Settings tab (voice, playback speed, dark mode, etc. — none built; lives at project
   level per [[Decisions/0018-project-centric-ia-no-global-nav|0018]], global `/settings`
   redirects home)
@@ -44,7 +54,11 @@ Follow-ups, in rough value order: a hands-on human pass of the voice UX on real 
 (see [[Decisions/0016-voice-layer-tts-stt-choices]]); the spec's richer two-panel live
 interview layout (live transcript panel, upcoming topics, playback controls); the
 Settings tab (voice choice, playback speed, auto-advance — the TTS voice is already
-env-configurable, just not per-user); re-answer/compare-versions in review;
+env-configurable, just not per-user); re-answer/compare-versions in review (per-answer
+`version`/`is_current` columns exist but the UI isn't built — note "Practice again" now
+covers redoing a *whole* interview with the same config + adaptive-fresh questions, just
+not re-answering the same questions side by side); Tier-2/3 delivery (word-timestamp
+fillers, mic volume, audio-LLM tone — see [[Decisions/0026-delivery-analysis-baked-into-score]]);
 URL-resource content extraction (scraping pasted URLs into `content`, vs. the manual
 paste fallback that exists) as the last bit of #2; Google/GitHub OAuth (manual dashboard
 config — see [[Backend]]).

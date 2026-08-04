@@ -96,6 +96,13 @@ drives the lifecycle (`sessions/[sessionId]/actions.ts`): `startInterview` flips
 `configured`→`in_progress` + sets `started_at`; `completeInterview` sets `completed`,
 `completed_at`, `duration_seconds`, `overall_score`, and the `summary` jsonb (shaped by
 `sessionSummarySchema`). See [[Decisions/0015-live-interview-text-mode-first]].
+As of 2026-08-03 ([[Decisions/0026-delivery-analysis-baked-into-score]]) the `summary`
+jsonb is a **superset** of `sessionSummarySchema`: `generateSessionSummary` also writes
+`delivery` (the Tier-1 delivery report) and `contentScore` (the AI content-only score),
+and **`overall_score` / `summary.overallScore` are now the blended content+delivery
+score (85/15)**, not the raw content score. Read code should treat the stored summary as
+`SessionSummary & { contentScore?, delivery? }`. Sessions completed before this date have
+neither field.
 
 ### `questions`
 `id, session_id, question, category, difficulty, order_index, asked_at, tts_audio_path, created_at`
@@ -116,7 +123,10 @@ Written by the shared `processAnswer` core during the live interview (`submitTex
 and `submitAudioAnswer` both end there): `transcript` = the typed answer or the STT
 transcription, `score` + `feedback` (jsonb, shaped by `answerEvaluationSchema`) from
 per-answer evaluation, `follow_up_generated` set true when that answer spawned an adaptive
-follow-up. Spoken answers also set `audio_storage_path` (recording in `interview-audio`,
+follow-up. As of 2026-08-03 `feedback` also carries a `communication` sub-object
+(specificity / structure / directness, 0–100) — the LLM's delivery read, aggregated at
+session completion into `summary.delivery` (see
+[[Decisions/0026-delivery-analysis-baked-into-score]]). Spoken answers also set `audio_storage_path` (recording in `interview-audio`,
 uploaded *before* transcription so STT failure can't lose it) and `duration_seconds` —
 see [[Decisions/0016-voice-layer-tts-stt-choices]]. `score` is pulled out of
 `feedback` as its own column for easy aggregation. Supports "Re-answer" / "Compare versions"

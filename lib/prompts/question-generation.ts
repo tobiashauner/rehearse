@@ -2,6 +2,7 @@ import { z } from "zod";
 import type OpenAI from "openai";
 import type { Database } from "@/types/database";
 import type { ProjectAnalysis } from "@/lib/prompts/project-analysis";
+import { personalityPrompt } from "@/lib/interview-personality";
 
 export const questionGenerationResultSchema = z.object({
   questions: z
@@ -116,7 +117,7 @@ export function buildQuestionGenerationMessages({
         "Interview configuration:\n" +
         `- Type: ${config.interviewType}\n` +
         `- Difficulty: ${config.difficulty}\n` +
-        `- Interviewer personality: ${config.interviewerPersonality}\n` +
+        `- Interviewer personality: ${personalityPrompt(config.interviewerPersonality)}\n` +
         `- Conversation mode: ${config.conversationMode}\n` +
         `- Length: ${config.lengthMinutes} minutes\n\n` +
         (pastPerformance

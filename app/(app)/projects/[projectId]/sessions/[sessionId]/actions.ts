@@ -24,7 +24,13 @@ import {
   sessionSummarySchema,
   buildSessionSummaryMessages,
 } from "@/lib/prompts/session-summary";
+import {
+  computeDelivery,
+  blendScore,
+  type CommunicationScores,
+} from "@/lib/delivery";
 import type { ProjectAnalysis } from "@/lib/prompts/project-analysis";
+import { personalityTts } from "@/lib/interview-personality";
 import {
   audioAnswerSchema,
   MAX_ANSWER_AUDIO_BYTES,
@@ -46,19 +52,6 @@ const FOLLOWUP_ORDER_BASE = 1000;
 
 const AUDIO_BUCKET = "interview-audio";
 const SIGNED_URL_TTL_SECONDS = 60 * 60;
-
-// Speaking-style hints fed to the TTS model so the question audio matches the
-// configured interviewer personality.
-const PERSONALITY_TTS_STYLE: Record<string, string> = {
-  friendly: "Warm and encouraging, conversational pace.",
-  direct: "Businesslike and brisk, no filler.",
-  analytical: "Measured and precise, calm and thoughtful.",
-  skeptical: "Cool and probing, with a hint of doubt.",
-  fast_paced: "Energetic, speaking at a quick clip.",
-  interrupts_often: "Impatient, with clipped delivery.",
-  pushes_for_metrics: "No-nonsense, zeroing in on specifics.",
-  challenges_assumptions: "Confident, with a challenging edge.",
-};
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
 
@@ -310,7 +303,7 @@ export async function getQuestionAudio(
   }
 
   try {
-    const style = PERSONALITY_TTS_STYLE[session.interviewer_personality];
+    const style = personalityTts(session.interviewer_personality);
     const speech = await getOpenAIClient().audio.speech.create({
       model: OPENAI_TTS_MODEL,
       voice: session.interviewer_voice || OPENAI_TTS_VOICE,
@@ -733,7 +726,7 @@ async function generateSessionSummary(
 
   const { data: answers } = await supabase
     .from("answers")
-    .select("question_id, transcript, score")
+    .select("question_id, transcript, score, duration_seconds, feedback")
     .in(
       "question_id",
       questions.map((q) => q.id),
@@ -796,9 +789,25 @@ async function generateSessionSummary(
     const summary = completion.choices[0]?.message?.parsed;
     if (!summary) return false;
 
+    // Fold in the deterministic delivery read (Tier-1: pace, fillers, hedging,
+    // ownership) as a small, transparent weight. contentScore preserves the
+    // AI's content-only score; overallScore becomes the blended headline.
+    const delivery = computeDelivery(
+      (answers ?? []).map((a) => ({
+        transcript: (a.transcript as string | null) ?? "",
+        durationSeconds: a.duration_seconds as number | null,
+        communication:
+          (a.feedback as { communication?: CommunicationScores } | null)
+            ?.communication ?? null,
+      })),
+    );
+    const contentScore = summary.overallScore;
+    const overallScore = blendScore(contentScore, delivery?.score ?? null);
+    const stored = { ...summary, overallScore, contentScore, delivery };
+
     await supabase
       .from("interview_sessions")
-      .update({ summary, overall_score: summary.overallScore })
+      .update({ summary: stored, overall_score: overallScore })
       .eq("id", sessionId);
     return true;
   } catch (err) {

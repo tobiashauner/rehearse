@@ -20,11 +20,19 @@ React 19.2 / Next 16), it's the mainstream React choice, and its `Tooltip` /
 tooltip + average line with little code.
 
 Chart follows the `dataviz` skill house rules: single series → **no legend**
-(the tile title names it); honest **time-spaced** x-axis (one tick per
-interview) so cadence stays truthful; thin 2px petrol line; ≥8px dots ringed in
-the surface color; recessive token-driven grid/axes; all colors are CSS
-variables (`--badge-accent`, `--card`, `--border`, `--muted-foreground`,
-`--popover`) so light/dark come from the theme with no per-mode branching.
+(the tile title names it); recessive token-driven grid/axes; a dashed average
+line; a rich hover tooltip; all colors are CSS variables so light/dark come from
+the theme with no per-mode branching.
+
+**Restyled 2026-08-03 (line → capped bars):** at the user's request, adopted a
+"capped bar" visual — one bar per interview, a bright tier-colored rounded cap
+floating over a soft faded fill of the same hue (a custom `Bar` `shape` +
+per-tier `<linearGradient>` defs keyed off the `--score-*` tokens). Kept the
+tier coloring (good/ok/needs-work reads per bar), gridlines, average line, and
+tooltip. This dropped the original honest **time-spaced** x-axis in favor of
+**evenly-spaced categories** (one bar each, dates still labeled) — bars read
+cleaner evenly spaced, and cadence-over-time now lives in the Practice cadence
+tile, not this chart's x-position.
 
 ## Notes / consequences
 

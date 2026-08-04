@@ -1,7 +1,14 @@
 "use client";
 
 import { useTransition } from "react";
-import { Sparkles, TrendingUp } from "lucide-react";
+import {
+  CircleCheck,
+  Dumbbell,
+  Sparkles,
+  Target,
+  TrendingUp,
+  type LucideIcon,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,6 +25,7 @@ import {
   INTERVIEW_TYPE_OPTIONS,
   optionLabel,
 } from "@/lib/validations/session";
+import { ConfigureInterviewDialog } from "@/components/interview/configure-interview-dialog";
 import type { CoachingPlan } from "@/lib/prompts/coaching-plan";
 import { generateCoachingPlan } from "@/app/(app)/projects/[projectId]/sessions/actions";
 
@@ -96,53 +104,116 @@ export function CoachingPlanPanel({
           {generateButton}
         </div>
       </CardHeader>
-      <CardContent className="space-y-5">
-        <div className="flex items-start gap-2 text-sm text-muted-foreground">
-          <TrendingUp className="mt-0.5 size-4 shrink-0" />
-          <p>{plan.progress}</p>
+      <CardContent className="space-y-6">
+        {/* Progress — trend callout */}
+        <div className="flex items-start gap-3 rounded-xl bg-primary/[0.08] p-4">
+          <TrendingUp className="mt-0.5 size-5 shrink-0 text-badge-accent" />
+          <p className="text-sm leading-relaxed">{plan.progress}</p>
         </div>
 
-        <ol className="space-y-3">
-          {plan.focusAreas.map((focus, i) => (
-            <li key={i} className="rounded-lg border p-3">
-              <p className="text-sm font-medium">
-                {i + 1}. {focus.area}
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">{focus.why}</p>
-              <p className="mt-1 text-sm">
-                <span className="font-medium">Practice:</span> {focus.practice}
-              </p>
-            </li>
-          ))}
-        </ol>
+        {/* Focus areas */}
+        <PlanSection icon={Target} title="Focus areas">
+          <ol className="space-y-3">
+            {plan.focusAreas.map((focus, i) => (
+              <li key={i} className="rounded-xl border bg-card p-4 shadow-resting">
+                <div className="flex items-center gap-2.5">
+                  <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-badge-accent text-xs font-semibold text-badge-accent-foreground tabular-nums">
+                    {i + 1}
+                  </span>
+                  <p className="font-medium">{focus.area}</p>
+                </div>
+                <p className="mt-2 text-sm text-muted-foreground">{focus.why}</p>
+                <div className="mt-3 flex items-start gap-2 rounded-lg bg-muted px-3 py-2.5 text-sm">
+                  <Dumbbell className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                  <p>
+                    <span className="font-medium">Practice:</span>{" "}
+                    {focus.practice}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </PlanSection>
 
+        {/* Keep doing */}
         {plan.strengthsToKeep.length > 0 && (
-          <div className="space-y-1">
-            <p className="text-sm font-medium">Keep doing</p>
-            <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+          <PlanSection icon={CircleCheck} title="Keep doing">
+            <ul className="space-y-2">
               {plan.strengthsToKeep.map((item, i) => (
-                <li key={i}>{item}</li>
+                <li
+                  key={i}
+                  className="flex items-start gap-2.5 text-sm text-foreground/80"
+                >
+                  <CircleCheck className="mt-0.5 size-4 shrink-0 text-badge-accent" />
+                  <span>{item}</span>
+                </li>
               ))}
             </ul>
-          </div>
+          </PlanSection>
         )}
 
-        <div className="flex flex-wrap items-center gap-2 border-t pt-4 text-sm">
-          <span className="font-medium">Suggested next interview:</span>
-          <Badge variant="accent">
-            {optionLabel(
-              INTERVIEW_TYPE_OPTIONS,
-              plan.suggestedNextInterview.interviewType,
-            )}
-          </Badge>
-          <Badge variant="outline">
-            {optionLabel(DIFFICULTY_OPTIONS, plan.suggestedNextInterview.difficulty)}
-          </Badge>
-          <span className="text-muted-foreground">
+        {/* Suggested next interview */}
+        <div className="rounded-xl bg-primary/[0.08] p-4">
+          <div className="flex items-center gap-2">
+            <Sparkles className="size-4 shrink-0 text-badge-accent" />
+            <p className="text-sm font-medium">Suggested next interview</p>
+          </div>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <Badge variant="accent">
+              {optionLabel(
+                INTERVIEW_TYPE_OPTIONS,
+                plan.suggestedNextInterview.interviewType,
+              )}
+            </Badge>
+            <Badge variant="outline">
+              {optionLabel(
+                DIFFICULTY_OPTIONS,
+                plan.suggestedNextInterview.difficulty,
+              )}
+            </Badge>
+          </div>
+          <p className="mt-2 text-sm text-muted-foreground">
             {plan.suggestedNextInterview.focus}
-          </span>
+          </p>
+          <div className="mt-3">
+            {/* A coaching plan only exists after completed interviews, which
+                required a briefing — so hasBriefing is effectively true here;
+                createInterviewSession re-checks and errors if it's gone. */}
+            <ConfigureInterviewDialog
+              projectId={projectId}
+              hasBriefing
+              completedSessionCount={completedSessionCount}
+              initialConfig={{
+                interviewType: plan.suggestedNextInterview.interviewType,
+                difficulty: plan.suggestedNextInterview.difficulty,
+              }}
+              triggerLabel="Start this interview"
+              title="Start the suggested interview"
+            />
+          </div>
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+/** A labeled sub-section of the coaching plan: icon + title, then content. */
+function PlanSection({
+  icon: Icon,
+  title,
+  children,
+}: {
+  icon: LucideIcon;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <div className="flex items-center gap-2">
+        <Icon className="size-4 text-muted-foreground" />
+        <h4 className="text-sm font-medium">{title}</h4>
+      </div>
+      <div className="mt-3">{children}</div>
+    </div>
   );
 }

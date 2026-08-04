@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type OpenAI from "openai";
+import { personalityPrompt } from "@/lib/interview-personality";
 
 export const answerEvaluationSchema = z.object({
   score: z
@@ -17,6 +18,33 @@ export const answerEvaluationSchema = z.object({
   missedPoints: z
     .array(z.string())
     .describe("Key points a strong answer to this question would have covered but this one did not."),
+  communication: z
+    .object({
+      specificity: z
+        .number()
+        .min(0)
+        .max(100)
+        .describe(
+          "How concrete and evidence-backed the answer is — specific numbers, names, dates, examples vs. vague generalities. 0-100.",
+        ),
+      structure: z
+        .number()
+        .min(0)
+        .max(100)
+        .describe(
+          "How clearly the answer is organized — a logical arc (e.g. situation → action → result) vs. wandering. 0-100.",
+        ),
+      directness: z
+        .number()
+        .min(0)
+        .max(100)
+        .describe(
+          "How directly it answers the question actually asked — leads with the answer vs. dodging or rambling. 0-100.",
+        ),
+    })
+    .describe(
+      "Delivery sub-scores about HOW the answer was communicated, judged separately from whether the content was correct.",
+    ),
 });
 
 export type AnswerEvaluation = z.infer<typeof answerEvaluationSchema>;
@@ -67,14 +95,18 @@ export function buildAnswerEvaluationMessages({
         (project.role ? ` — ${project.role}` : "") +
         (project.company ? ` @ ${project.company}` : "") +
         `\nInterview type: ${config.interviewType} · Difficulty: ${config.difficulty} · ` +
-        `Interviewer style: ${config.interviewerPersonality}` +
+        `Interviewer style: ${personalityPrompt(config.interviewerPersonality)}` +
         grounding +
         `\n\nQuestion (${question.category ?? "general"}, ${question.difficulty ?? "medium"}):\n` +
         `${question.question}\n\n` +
         `Candidate's answer:\n${answer.trim() || "(no answer given)"}\n\n` +
         "Evaluate this answer. Return a score (0-100), a one-sentence summary, the " +
         "answer's strengths, concrete improvements, and any key points a strong answer " +
-        "would have covered but this one missed.",
+        "would have covered but this one missed. Also rate its delivery on three axes " +
+        "(0-100 each), judging HOW it was communicated rather than whether the content " +
+        "was correct: specificity (concrete numbers/names/examples vs. vague), structure " +
+        "(a clear arc vs. wandering), and directness (answers the actual question vs. " +
+        "dodging or rambling).",
     },
   ];
 }

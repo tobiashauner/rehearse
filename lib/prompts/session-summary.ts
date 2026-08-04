@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type OpenAI from "openai";
+import { personalityPrompt } from "@/lib/interview-personality";
 
 export const sessionSummarySchema = z.object({
   overallScore: z
@@ -70,7 +71,7 @@ export function buildSessionSummaryMessages({
         (project.role ? ` — ${project.role}` : "") +
         (project.company ? ` @ ${project.company}` : "") +
         `\nInterview type: ${config.interviewType} · Difficulty: ${config.difficulty} · ` +
-        `Interviewer style: ${config.interviewerPersonality}\n\n` +
+        `Interviewer style: ${personalityPrompt(config.interviewerPersonality)}\n\n` +
         `Full transcript:\n\n${transcriptText}\n\n` +
         "Write the debrief: an overall score (0-100), a one-sentence headline verdict, " +
         "the candidate's strengths, weaknesses, which questions they should revisit, and " +

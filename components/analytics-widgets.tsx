@@ -2,6 +2,7 @@ import {
   AnswerLengthIllustration,
   CadenceIllustration,
   ClockIllustration,
+  DeliveryIllustration,
   EmptyTile,
   ScoresIllustration,
   Tile,
@@ -11,6 +12,44 @@ import {
   ScoreTrendChart,
   type ScoreTrendPoint,
 } from "@/components/score-trend-chart";
+import { scoreTier } from "@/lib/scoring";
+import { TickMeter } from "@/components/tick-meter";
+import { ScoreDisc } from "@/components/score-badge";
+import { cn } from "@/lib/utils";
+import type { DeliverySummary } from "@/lib/analytics";
+
+/** Shared header for the score/delivery tiles: tier disc + label + subtext. */
+function StatHeader({
+  score,
+  sub,
+  extra,
+}: {
+  score: number;
+  sub: string;
+  extra?: React.ReactNode;
+}) {
+  const tier = scoreTier(score);
+  return (
+    <div className="flex items-center gap-3">
+      <ScoreDisc score={score} />
+      <div className="space-y-1">
+        <div className="flex items-center gap-2">
+          <span
+            className={cn(
+              "rounded-4xl px-2 py-0.5 text-xs font-semibold",
+              tier.soft,
+              tier.text,
+            )}
+          >
+            {tier.label}
+          </span>
+          {extra}
+        </div>
+        <p className="text-sm text-muted-foreground">{sub}</p>
+      </div>
+    </div>
+  );
+}
 
 /*
  * Analytics page widgets, built from the data the pipeline actually
@@ -37,7 +76,7 @@ function Stat({ value, unit, sub }: { value: string; unit?: string; sub: string 
   );
 }
 
-function AverageScoreTile({ scores }: { scores: number[] }) {
+export function AverageScoreTile({ scores }: { scores: number[] }) {
   if (scores.length === 0) {
     return (
       <EmptyTile
@@ -48,18 +87,18 @@ function AverageScoreTile({ scores }: { scores: number[] }) {
       </EmptyTile>
     );
   }
-  const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+  const avg = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
   return (
     <Tile title="Average score">
-      <Stat
-        value={String(Math.round(avg))}
-        sub={`across ${scores.length} interview${scores.length === 1 ? "" : "s"}`}
+      <StatHeader
+        score={avg}
+        sub={`average across ${scores.length} interview${scores.length === 1 ? "" : "s"}`}
       />
     </Tile>
   );
 }
 
-function PracticeTimeTile({
+export function PracticeTimeTile({
   totalSeconds,
   weekSeconds,
 }: {
@@ -96,7 +135,7 @@ function PracticeTimeTile({
   );
 }
 
-function AnswerLengthTile({
+export function AnswerLengthTile({
   avgWords,
   answerCount,
 }: {
@@ -124,7 +163,74 @@ function AnswerLengthTile({
   );
 }
 
-function ScoreTrendTile({ scores }: { scores: ScoreTrendPoint[] }) {
+/**
+ * Project-wide delivery read: the average delivery score across every
+ * interview, its trend, and a per-dimension breakdown (pace / fillers /
+ * hedging / ownership). Far more meaningful than raw answer length — it's the
+ * same coaching signal, aggregated, and it shows whether delivery is improving.
+ */
+export function DeliverySummaryTile({
+  delivery,
+}: {
+  delivery: DeliverySummary | null;
+}) {
+  if (!delivery) {
+    return (
+      <EmptyTile
+        title="Delivery"
+        description="How you come across — pace, filler words, hedging, and ownership — summarized across your interviews."
+      >
+        <DeliveryIllustration />
+      </EmptyTile>
+    );
+  }
+  return (
+    <Tile title="Delivery">
+      <StatHeader
+        score={delivery.score}
+        sub={`average across ${delivery.count} interview${delivery.count === 1 ? "" : "s"}`}
+        extra={
+          delivery.delta != null && delivery.delta !== 0 ? (
+            <span
+              className={cn(
+                "text-sm font-medium tabular-nums",
+                delivery.delta > 0
+                  ? "text-score-excellent"
+                  : "text-score-needs",
+              )}
+            >
+              {delivery.delta > 0 ? "+" : "−"}
+              {Math.abs(delivery.delta)}
+            </span>
+          ) : undefined
+        }
+      />
+      <div className="mt-4 space-y-2.5">
+        {(() => {
+          const substance = delivery.dimensions.filter(
+            (d) => d.group === "substance",
+          );
+          const shown = (
+            substance.length ? substance : delivery.dimensions
+          ).slice(0, 4);
+          return shown.map((d) => (
+            <div key={d.key} className="space-y-1">
+              <span className="text-xs text-muted-foreground">{d.label}</span>
+              <TickMeter score={d.score} size="sm" />
+            </div>
+          ));
+        })()}
+      </div>
+      {delivery.observations[0] && (
+        <p className="mt-3 text-xs text-muted-foreground">
+          {delivery.observations[0]}
+        </p>
+      )}
+    </Tile>
+  );
+}
+
+export function ScoreTrendTile({ scores }: { scores: ScoreTrendPoint[] }) {
   if (scores.length < 2) {
     return (
       <EmptyTile
@@ -143,29 +249,58 @@ function ScoreTrendTile({ scores }: { scores: ScoreTrendPoint[] }) {
   const first = Math.round(scores[0].score);
   const latest = Math.round(scores[scores.length - 1].score);
   const delta = latest - first;
+  const avg = Math.round(
+    scores.reduce((s, p) => s + p.score, 0) / scores.length,
+  );
   return (
     <Tile
       title="Score trend"
       span="lg:col-span-2"
-      caption={`Hover any point for that interview. ${scores.length} interviews, ${
+      caption={`Hover a bar for that interview. ${
         delta === 0
-          ? "flat overall"
-          : `${delta > 0 ? "up" : "down"} ${Math.abs(delta)} since the first`
-      }.`}
+          ? "Flat since the first."
+          : `${delta > 0 ? "Up" : "Down"} ${Math.abs(delta)} since the first.`
+      }`}
     >
-      <div className="flex items-baseline gap-3">
-        <p className="text-3xl font-medium tabular-nums">{latest}</p>
-        <span className="text-sm text-muted-foreground">latest</span>
-        {delta !== 0 && (
-          <span
-            className={`text-sm font-medium tabular-nums ${
-              delta > 0 ? "text-badge-accent" : "text-destructive"
-            }`}
-          >
-            {delta > 0 ? "+" : "−"}
-            {Math.abs(delta)}
-          </span>
-        )}
+      <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
+        <div>
+          <p className="text-xs font-medium text-muted-foreground">
+            Latest score
+          </p>
+          <div className="mt-1 flex items-center gap-2">
+            <span
+              className={cn(
+                "text-3xl font-semibold leading-none tabular-nums",
+                scoreTier(latest).text,
+              )}
+            >
+              {latest}
+            </span>
+            <span
+              className={cn(
+                "rounded-4xl px-2 py-0.5 text-xs font-semibold",
+                scoreTier(latest).soft,
+                scoreTier(latest).text,
+              )}
+            >
+              {scoreTier(latest).label}
+            </span>
+            {delta !== 0 && (
+              <span
+                className={cn(
+                  "text-sm font-medium tabular-nums",
+                  delta > 0 ? "text-score-excellent" : "text-score-needs",
+                )}
+              >
+                {delta > 0 ? "+" : "−"}
+                {Math.abs(delta)}
+              </span>
+            )}
+          </div>
+        </div>
+        <p className="text-sm text-muted-foreground tabular-nums">
+          avg {avg} · {scores.length} interviews
+        </p>
       </div>
       <ScoreTrendChart points={scores} />
     </Tile>
@@ -202,7 +337,7 @@ function CadenceBars({ weeks }: { weeks: WeekBucket[] }) {
   );
 }
 
-function PracticeCadenceTile({ weeks }: { weeks: WeekBucket[] }) {
+export function PracticeCadenceTile({ weeks }: { weeks: WeekBucket[] }) {
   const total = weeks.reduce((a, w) => a + w.count, 0);
   if (total === 0) {
     return (

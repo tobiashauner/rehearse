@@ -1,23 +1,17 @@
-import Link from "next/link";
-import { Mic } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { CreateProjectDialog } from "@/components/project/create-project-dialog";
 import {
   ProjectTile,
   type ProjectTileData,
 } from "@/components/project/project-tile";
 import { DashboardOnboarding } from "@/components/dashboard-onboarding";
-import {
-  INTERVIEW_TYPE_OPTIONS,
-  optionLabel,
-} from "@/lib/validations/session";
+import { PracticePunchcard } from "@/components/practice-punchcard";
+import { buildPracticeData } from "@/lib/practice";
 
 /*
- * The single home pane: every project as a metric tile, with one contextual
- * "resume your interview" banner when a session is mid-flight. There is no
- * other top-level surface — analytics and settings live inside each project.
+ * The single home pane: a two-column layout — full-width project cards on the
+ * left (2/3), each listing its own interviews, and a right rail (1/3) with the
+ * cross-project practice punch-card.
  */
 
 type SessionRow = {
@@ -25,9 +19,11 @@ type SessionRow = {
   project_id: string;
   status: string;
   interview_type: string;
+  difficulty: string;
   overall_score: number | null;
   started_at: string | null;
   completed_at: string | null;
+  duration_seconds: number | null;
 };
 
 export default async function HomePage() {
@@ -45,9 +41,9 @@ export default async function HomePage() {
   const { data: sessionRows } = await supabase
     .from("interview_sessions")
     .select(
-      "id, project_id, status, interview_type, overall_score, started_at, completed_at",
+      "id, project_id, status, interview_type, difficulty, overall_score, started_at, completed_at, duration_seconds",
     )
-    .in("status", ["in_progress", "paused", "completed"]);
+    .in("status", ["configured", "in_progress", "paused", "completed"]);
   const sessions = (sessionRows ?? []) as SessionRow[];
 
   const byProject = new Map<string, SessionRow[]>();
@@ -67,10 +63,6 @@ export default async function HomePage() {
           new Date(b.completed_at ?? 0).getTime(),
       )
       .map((s) => Number(s.overall_score));
-    const activity = own
-      .flatMap((s) => [s.started_at, s.completed_at])
-      .filter((d): d is string => Boolean(d))
-      .sort();
     return {
       id: p.id,
       title: p.title,
@@ -79,25 +71,33 @@ export default async function HomePage() {
       status: p.status,
       createdAt: p.created_at,
       scores,
-      hasInProgress: own.some(
-        (s) => s.status === "in_progress" || s.status === "paused",
-      ),
-      lastActiveAt: activity.at(-1) ?? null,
+      interviews: own.map((s) => ({
+        id: s.id,
+        interviewType: s.interview_type,
+        difficulty: s.difficulty,
+        status: s.status as ProjectTileData["interviews"][number]["status"],
+        score: s.overall_score,
+        completedAt: s.completed_at,
+      })),
     };
   });
 
-  // The one interview mid-flight (most recently started) gets the pane's
-  // single primary action; everything else stays calm.
-  const resumable = sessions
-    .filter((s) => s.status === "in_progress" || s.status === "paused")
-    .sort(
-      (a, b) =>
-        new Date(b.started_at ?? 0).getTime() -
-        new Date(a.started_at ?? 0).getTime(),
-    )[0];
-  const resumableProject = resumable
-    ? projects.find((p) => p.id === resumable.project_id)
-    : undefined;
+  // Practice tracked across every project — a calm punch-card, not a streak.
+  // The grid spans from the user's first project to today.
+  const firstProjectDate = projects.reduce(
+    (min, p) => (p.created_at < min ? p.created_at : min),
+    projects[0].created_at,
+  );
+  const practiceData = buildPracticeData(
+    sessions
+      .filter((s) => s.status === "completed" && s.completed_at)
+      .map((s) => ({
+        completedAt: s.completed_at as string,
+        durationSeconds: s.duration_seconds,
+        projectId: s.project_id,
+      })),
+    firstProjectDate,
+  );
 
   return (
     <div className="space-y-8">
@@ -109,46 +109,19 @@ export default async function HomePage() {
             after.
           </p>
         </div>
-        <CreateProjectDialog triggerVariant={resumable ? "outline" : "default"} />
+        <CreateProjectDialog />
       </div>
 
-      {resumable && resumableProject && (
-        <Card>
-          <CardContent className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-badge-accent/15 text-badge-accent">
-                <Mic className="size-4" />
-              </div>
-              <div>
-                <p className="text-sm font-medium">
-                  {resumable.status === "paused"
-                    ? "You have a paused interview"
-                    : "You have an interview mid-flight"}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {optionLabel(INTERVIEW_TYPE_OPTIONS, resumable.interview_type)}{" "}
-                  interview · {resumableProject.title}
-                </p>
-              </div>
-            </div>
-            <Button
-              nativeButton={false}
-              render={
-                <Link
-                  href={`/projects/${resumable.project_id}/sessions/${resumable.id}`}
-                />
-              }
-            >
-              Resume interview
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+      <div className="grid gap-6 lg:grid-cols-3 lg:items-start">
+        <div className="space-y-4 lg:col-span-2">
+          {tiles.map((tile) => (
+            <ProjectTile key={tile.id} project={tile} />
+          ))}
+        </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {tiles.map((tile) => (
-          <ProjectTile key={tile.id} project={tile} />
-        ))}
+        <aside className="space-y-6">
+          <PracticePunchcard data={practiceData} />
+        </aside>
       </div>
     </div>
   );

@@ -403,3 +403,24 @@ export function CadenceIllustration() {
     </svg>
   );
 }
+
+/* Voice waveform — for the Delivery summary's empty state. */
+export function DeliveryIllustration() {
+  const heights = [10, 20, 34, 22, 44, 30, 44, 22, 34, 20, 10];
+  return (
+    <svg viewBox="0 0 96 64" className="h-20 w-auto" fill="none">
+      {heights.map((h, i) => (
+        <rect
+          key={i}
+          x={12 + i * 7}
+          y={32 - h / 2}
+          width="3.5"
+          height={h}
+          rx="1.75"
+          fill="currentColor"
+          opacity={0.35 + (1 - Math.abs(i - 5) / 5) * 0.55}
+        />
+      ))}
+    </svg>
+  );
+}

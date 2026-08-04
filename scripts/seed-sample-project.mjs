@@ -28,6 +28,110 @@ const now = Date.now();
 const iso = (ms) => new Date(ms).toISOString();
 
 // ————————————————————————————————————————————————————————————————
+// Delivery (Tier-1) — a faithful JS port of lib/delivery.ts so the demo data
+// carries the same folded-in delivery score real interviews get. KEEP IN SYNC
+// with lib/delivery.ts if the math there changes.
+// ————————————————————————————————————————————————————————————————
+
+const DELIVERY_WEIGHT = 0.15;
+const FILLER_PATTERNS = [
+  /\b(?:um+|uh+|uhh+|er+|erm+|ah+|hmm+)\b/gi,
+  /\byou know\b/gi,
+  /\bi mean\b/gi,
+  /\bbasically\b/gi,
+  /\bliterally\b/gi,
+  /\bactually\b/gi,
+];
+const HEDGE_PATTERNS = [
+  /\bi think\b/gi, /\bi guess\b/gi, /\bi suppose\b/gi, /\bmaybe\b/gi,
+  /\bprobably\b/gi, /\bperhaps\b/gi, /\bsort of\b/gi, /\bkind of\b/gi,
+  /\bi'?m not sure\b/gi, /\bi feel like\b/gi, /\bhopefully\b/gi,
+];
+const I_PATTERN = /\b(?:i|i'm|i've|i'll|i'd|me|my|mine|myself)\b/gi;
+const WE_PATTERN = /\b(?:we|we're|we've|us|our|ours|ourselves)\b/gi;
+const clamp = (n) => Math.max(0, Math.min(100, Math.round(n)));
+const words = (t) => (t.trim() ? t.trim().split(/\s+/).length : 0);
+const count = (t, ps) => ps.reduce((s, re) => s + (t.match(re)?.length ?? 0), 0);
+const mean = (ns) => ns.reduce((a, b) => a + b, 0) / ns.length;
+const paceScore = (w) =>
+  w >= 110 && w <= 165 ? 100 : clamp(100 - (w < 110 ? 110 - w : w - 165) * 1.4);
+const fillerScore = (p) => clamp(100 - p * 10);
+const hedgeScore = (p) => clamp(100 - p * 8);
+const WEIGHTS = { specificity: 0.22, structure: 0.18, directness: 0.18, pace: 0.14, hedging: 0.16, fillers: 0.12 };
+const SUBSTANCE_NOTES = {
+  specificity: { low: "Answers stay general — name numbers, dates, and concrete examples.", mid: "Some specifics land; quantify more of your claims.", high: "Concrete and evidence-backed." },
+  structure: { low: "Answers wander — use a clear arc (situation → action → result).", mid: "Mostly structured; tighten the through-line.", high: "Clear, easy-to-follow structure." },
+  directness: { low: "Not always answering what's asked — lead with the direct answer.", mid: "Gets there, but sometimes circles first.", high: "Answers the question head-on." },
+};
+const substanceNote = (key, s) => SUBSTANCE_NOTES[key][s < 55 ? "low" : s < 75 ? "mid" : "high"];
+
+// Synthesize plausible LLM substance scores from an answer's content score
+// (deterministic, varied per index) so demo data has the shape real interviews
+// get from the per-answer evaluation.
+const commFromScore = (score, i) => ({
+  specificity: clamp(score - 8 + ((i * 7) % 11)),
+  structure: clamp(score + 4 - ((i * 5) % 9)),
+  directness: clamp(score + 1 + (((i * 3) % 7) - 3)),
+});
+
+function computeDelivery(inputs) {
+  const ans = inputs.filter((a) => a.transcript.trim().length > 0);
+  if (!ans.length) return null;
+  const all = ans.map((a) => a.transcript).join(" ");
+  const total = words(all);
+  if (!total) return null;
+  const metrics = [];
+  const comms = ans.map((a) => a.communication).filter(Boolean);
+  if (comms.length) {
+    [["specificity", "Specificity"], ["structure", "Structure"], ["directness", "Directness"]].forEach(([key, label]) => {
+      const sc = clamp(mean(comms.map((c) => c[key])));
+      metrics.push({ key, label, group: "substance", score: sc, note: substanceNote(key, sc) });
+    });
+  }
+  const spoken = ans.filter((a) => a.durationSeconds > 0);
+  const sw = spoken.reduce((s, a) => s + words(a.transcript), 0);
+  const ss = spoken.reduce((s, a) => s + a.durationSeconds, 0);
+  const wpm = ss > 0 ? Math.round(sw / (ss / 60)) : null;
+  if (wpm != null) {
+    metrics.push({ key: "pace", label: "Pace", group: "habit", value: `${wpm} wpm`, score: paceScore(wpm),
+      note: wpm < 110 ? "A little slow — it can read as hesitant. Aim for a steadier flow."
+        : wpm > 165 ? "A touch fast — breathe between points so they land."
+        : "A steady, easy-to-follow rhythm." });
+  }
+  const hedge = count(all, HEDGE_PATTERNS); const hPer = (hedge / total) * 100;
+  metrics.push({ key: "hedging", label: "Hedging", group: "habit", value: `${hedge} · ${hPer.toFixed(1)}/100 words`, score: hedgeScore(hPer),
+    note: hPer < 1.5 ? "You state things plainly — sounds sure."
+      : hPer < 4 ? '"I think" / "maybe" creep in — drop a few to sound more certain.'
+      : "Lots of hedging — commit to your claims, then caveat if needed." });
+  const filler = count(all, FILLER_PATTERNS); const fPer = (filler / total) * 100;
+  metrics.push({ key: "fillers", label: "Filler words", group: "habit", value: `${filler} · ${fPer.toFixed(1)}/100 words`, score: fillerScore(fPer), approximate: true,
+    note: fPer < 1.5 ? "Barely any filler — crisp and deliberate."
+      : fPer < 4 ? "A few fillers (um, you know…) — easy to trim."
+      : "Filler words are diluting otherwise good points." });
+  const iC = count(all, [I_PATTERN]); const wC = count(all, [WE_PATTERN]);
+  const observations = [];
+  if (iC + wC > 0) {
+    const iPct = Math.round((iC / (iC + wC)) * 100);
+    const tail = iPct > 85 ? " — strong ownership; credit the team where it's theirs."
+      : iPct < 55 ? ' — leaning on "we"; make your own role clearer.'
+      : ' — a balanced mix of "I" and "we".';
+    observations.push(`Spoke in the first person ${iPct}% of the time${tail}`);
+  }
+  const tw = metrics.reduce((s, m) => s + WEIGHTS[m.key], 0);
+  const score = tw > 0 ? clamp(metrics.reduce((s, m) => s + m.score * WEIGHTS[m.key], 0) / tw) : 75;
+  return { score, spokenAnswers: spoken.length, answers: ans.length, metrics, observations };
+}
+
+const blendScore = (content, delivery) =>
+  delivery == null
+    ? Math.round(content)
+    : Math.round(content * (1 - DELIVERY_WEIGHT) + delivery * DELIVERY_WEIGHT);
+
+// Spoken pace per completed session (oldest → newest): halting at first, more
+// composed later — so the Delivery score climbs alongside content.
+const PACE_WPM = [102, 120, 135, 145];
+
+// ————————————————————————————————————————————————————————————————
 // Static content: role/company, resources, briefing.
 // ————————————————————————————————————————————————————————————————
 
@@ -232,7 +336,7 @@ const COMPLETED_SESSIONS = [
         difficulty: "easy",
         question: "Walk me through your background and why this role.",
         answer:
-          "Sure — I've been a PM for about seven years, most recently on the payments dashboard at a fintech. I like this role because it's messaging in healthcare, which feels higher-stakes and I want work that matters more.",
+          "Sure — um, I've been a PM for about seven years, most recently on the payments dashboard at a fintech. I like this role because, you know, it's messaging in healthcare, which I think feels higher-stakes and I want work that matters more.",
         score: 62,
         feedback: fb(
           "Friendly and clear, but the 'why this role' is thin and generic.",
@@ -274,7 +378,7 @@ const COMPLETED_SESSIONS = [
         difficulty: "medium",
         question: "How do you prioritize when everything feels urgent?",
         answer:
-          "I try to look at what's most important and talk to stakeholders, then make a call. I use a rough sense of impact versus effort and go from there.",
+          "Um, I try to look at what's most important and, you know, talk to stakeholders, then make a call. I mean, I guess I use a rough sense of impact versus effort and, kind of, go from there.",
         score: 50,
         feedback: fb(
           "Describes the vibe of prioritization, not a method.",
@@ -760,9 +864,33 @@ async function main() {
   console.log("Inserted AI briefing");
 
   // Completed sessions + questions + answers.
-  for (const s of COMPLETED_SESSIONS) {
+  for (let si = 0; si < COMPLETED_SESSIONS.length; si++) {
+    const s = COMPLETED_SESSIONS[si];
     const completedAt = now - s.daysAgo * DAY;
     const startedAt = completedAt - s.duration_seconds * 1000;
+    const wpm = PACE_WPM[si] ?? 130;
+
+    // Per-answer spoken durations from word count at this session's pace, and
+    // the delivery read folded into the stored score (mirrors the live flow).
+    const durations = s.questions.map((q) =>
+      Math.max(20, Math.round((words(q.answer) / wpm) * 60)),
+    );
+    const comms = s.questions.map((q, i) => commFromScore(q.score, i));
+    const delivery = computeDelivery(
+      s.questions.map((q, i) => ({
+        transcript: q.answer,
+        durationSeconds: durations[i],
+        communication: comms[i],
+      })),
+    );
+    const contentScore = s.overall_score;
+    const overallScore = blendScore(contentScore, delivery?.score ?? null);
+    const storedSummary = {
+      ...s.summary,
+      overallScore,
+      contentScore,
+      delivery,
+    };
 
     const { data: session, error: sErr } = await supabase
       .from("interview_sessions")
@@ -777,8 +905,8 @@ async function main() {
         started_at: iso(startedAt),
         completed_at: iso(completedAt),
         duration_seconds: s.duration_seconds,
-        overall_score: s.overall_score,
-        summary: s.summary,
+        overall_score: overallScore,
+        summary: storedSummary,
         created_at: iso(startedAt - 5 * 60 * 1000),
       })
       .select("id")
@@ -808,7 +936,8 @@ async function main() {
         question_id: question.id,
         transcript: q.answer,
         score: q.score,
-        feedback: q.feedback,
+        feedback: { ...q.feedback, communication: comms[i] },
+        duration_seconds: durations[i],
         follow_up_generated: false,
         version: 1,
         is_current: true,
@@ -816,7 +945,7 @@ async function main() {
       });
     }
     console.log(
-      `  ${s.interview_type}/${s.difficulty} — ${s.questions.length} Q, score ${s.overall_score}`,
+      `  ${s.interview_type}/${s.difficulty} — content ${contentScore}, delivery ${delivery?.score ?? "—"} → ${overallScore}`,
     );
   }
 

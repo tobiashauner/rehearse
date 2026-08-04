@@ -3,13 +3,15 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Building2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { createClient } from "@/lib/supabase/server";
-import { ProjectSidebar } from "@/components/project/project-sidebar";
+import { ProjectTopNav } from "@/components/project/project-top-nav";
+import { ProjectShell } from "@/components/project/project-shell";
+import { InterviewRail } from "@/components/project/interview-rail";
 
 /*
- * Shared frame for every page inside a project: a labeled "Back to all
- * projects" link on its own row, then the project title above the section
- * rail + content, so pages below only render their own section-level
- * headings.
+ * Shared frame for every page inside a project: a pinned top area (back link,
+ * title, and the horizontal section nav), then the body — a persistent
+ * interview rail on the left with the section/interview detail on the right
+ * (the focused sections render full-width; ProjectShell decides).
  */
 export default async function ProjectLayout({
   children,
@@ -31,15 +33,35 @@ export default async function ProjectLayout({
     notFound();
   }
 
+  const [{ data: sessions }, { data: briefing }, { count: completedCount }] =
+    await Promise.all([
+      supabase
+        .from("interview_sessions")
+        .select(
+          "id, status, interview_type, difficulty, interviewer_personality, length_minutes, overall_score, completed_at, created_at",
+        )
+        .eq("project_id", projectId)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("ai_briefings")
+        .select("project_id")
+        .eq("project_id", projectId)
+        .limit(1)
+        .maybeSingle(),
+      supabase
+        .from("interview_sessions")
+        .select("id", { count: "exact", head: true })
+        .eq("project_id", projectId)
+        .eq("status", "completed"),
+    ]);
+
   const subtitle =
     [project.role, project.company].filter(Boolean).join(" @ ") ||
     "No role or company set";
 
   return (
     <div>
-      {/* Frozen top area: back link sits tight above the title, and the whole
-          block stays pinned so the project stays identified on long pages.
-          Negative margins let the backdrop span the padded content width. */}
+      {/* Pinned top area: back link, title, and the section nav. */}
       <div className="sticky top-0 z-10 -mx-6 border-b border-border/60 bg-background/85 px-6 pb-4 backdrop-blur-sm sm:-mx-10 sm:px-10">
         <Link
           href="/"
@@ -49,29 +71,40 @@ export default async function ProjectLayout({
           Back to all projects
         </Link>
 
-        <div className="mt-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <h1 className="truncate text-3xl font-medium tracking-tight">
-              {project.title}
-            </h1>
-            {project.status === "archived" && (
-              <Badge variant="outline" className="capitalize">
-                archived
-              </Badge>
-            )}
+        <div className="mt-1 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h1 className="truncate text-3xl font-medium tracking-tight">
+                {project.title}
+              </h1>
+              {project.status === "archived" && (
+                <Badge variant="outline" className="capitalize">
+                  archived
+                </Badge>
+              )}
+            </div>
+            <p className="mt-1.5 flex items-center gap-1.5 text-[0.9375rem] font-medium text-foreground/75">
+              <Building2 className="size-4 shrink-0 text-muted-foreground" />
+              <span className="truncate">{subtitle}</span>
+            </p>
           </div>
-          <p className="mt-1.5 flex items-center gap-1.5 text-[0.9375rem] font-medium text-foreground/75">
-            <Building2 className="size-4 shrink-0 text-muted-foreground" />
-            <span className="truncate">{subtitle}</span>
-          </p>
+          <ProjectTopNav projectId={project.id} />
         </div>
       </div>
 
-      <div className="flex flex-col gap-6 pt-6 md:flex-row md:gap-0">
-        <ProjectSidebar projectId={project.id} />
-        <div className="min-w-0 flex-1 md:border-l md:border-border md:pl-10">
+      <div className="pt-6">
+        <ProjectShell
+          rail={
+            <InterviewRail
+              projectId={project.id}
+              sessions={sessions ?? []}
+              hasBriefing={!!briefing}
+              completedCount={completedCount ?? 0}
+            />
+          }
+        >
           {children}
-        </div>
+        </ProjectShell>
       </div>
     </div>
   );

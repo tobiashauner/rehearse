@@ -4,6 +4,157 @@ Dated log of actual work sessions on this app. Add a new entry at the end of eac
 that changes the app (newest at top). Keep entries short — what changed and why, not a
 diff.
 
+## 2026-08-04 — Home page split into projects + right rail
+
+- **Home is now a two-column layout** ([[Decisions/0029-practice-punchcard-at-home]]):
+  full-width project cards on the left (`lg:col-span-2`, one per row) and a **1/3 right
+  rail** with the cross-project Practice punch-card. The standalone "resume" banner is gone.
+- **Project cards now list their own interviews** (`components/project/project-tile.tsx`
+  rebuilt as a full-width card): the header carries the title + latest score as a **tier
+  circle** (`ScoreDisc`; the old number+sparkline treatment was dropped for consistency),
+  and below it every interview is listed **in the project-overview rail style** — Mic square
+  left, type + `difficulty · status` middle, tier score-circle (or dashed status circle) on
+  the **right** — on a tinted `bg-accent` tray. In flight (`in_progress`/`paused`) and
+  `configured` (ready to start) sort first, then recent completed; capped at 4 rows with a
+  "View all N" link. Empty projects show the setup hint + "Set up". The home session query
+  now also selects `configured` rows (and `difficulty` for the row subtitle).
+  (A brief cross-project "Interviews" rail card — `components/home/upcoming-interviews.tsx`
+  — was superseded by this per-project listing and deleted.)
+- **Practice punch-card reworked for the narrow rail**: dropped the wide-banner layout
+  (horizontal header stats + `w-max` scrolling band) for a compact vertical widget whose
+  day-grid **fills the column width** (columns `flex-1`, `aspect-square` cells) with a stat
+  row on top and range/legend footer. Filling is ideal here — in a ~380px column cells stay
+  small instead of ballooning as they did full-width.
+
+## 2026-08-04 — Personality actually drives the interview + config-modal clarity
+
+- **Interviewer personality is now a real behavioral lever**
+  ([[Decisions/0030-personality-behavior-and-option-descriptions]]): new
+  `lib/interview-personality.ts` (`PERSONALITY_BEHAVIOR` → `{ prompt, tts, interruptive }`,
+  helpers `personalityPrompt` / `personalityTts` / `isInterruptive`) is the single source of
+  truth. All four reasoning prompts (question / follow-up / answer-eval / summary) now inject
+  the rich natural-language behavior instead of the bare enum token, and the TTS uses the
+  shared style (deleted the inline `PERSONALITY_TTS_STYLE` map). So all 8 personalities bite,
+  not just cosmetically.
+- **"Interrupts often" now lives up to its name** (within the turn-based runner): the
+  follow-up prompt's `interruptive` branch lowers the follow-up bar (cut in on any
+  rambling/vague/unsupported answer) and phrases the follow-up as a cut-in ("Let me stop you
+  there —"). No true mid-answer barge-in (would need live audio monitoring); the label now
+  matches actual behavior.
+- **Config modal explains each option**: added `description`s to the Interview Type /
+  Difficulty / Personality / Conversation Mode options and extended the shared `SelectItem`
+  with an optional `description` (smaller muted line under the label, dropdown-only). Also
+  reflowed the modal so **Interviewer Voice gets its own full-width row** (no more "Alloy —
+  neutra…" truncation) with **Length + Playback Speed** paired side-by-side above it.
+
+## 2026-08-03 — Score transparency + delivery (EQ) analysis, single dashboard, redo
+
+A large session: made the score legible, added a delivery layer, consolidated the IA,
+and made interviews repeatable.
+
+- **Score display system** ([[Decisions/0025-score-display-system]]): a shared,
+  coaching-tone tier scale (Excellent / Strong / Developing / Needs work) in
+  `lib/scoring.ts`, backed by theme-aware `--score-*` tokens (light + dark). New
+  `components/score-gauge.tsx` (radial gauge — SSR-safe: the number renders at its real
+  value immediately, only the ring animates; an earlier count-up-from-0 could get stuck
+  at 0), `score-badge.tsx` (`ScorePill` / `ScoreCircle`), and `score-explainer.tsx`
+  (the "How is this scored?" popover). Tier colors applied on the review hero, per-answer
+  pills, session cards, dashboard tiles, and the score-trend chart dots.
+- **Delivery (Tier-1 EQ) analysis** ([[Decisions/0026-delivery-analysis-baked-into-score]]):
+  deterministic, transcript-derived signals — pace (wpm), filler words, hedging, and
+  ownership ("I" vs "we") — in `lib/delivery.ts`, computed at completion inside
+  `generateSessionSummary` and **folded into the score at 15%** (behavioral signals, not
+  acoustic, to avoid accent/voice bias). Stored in the `interview_sessions.summary` jsonb
+  as `delivery` + `contentScore`; `overallScore` / `overall_score` are now the blend.
+  Shown as a Delivery panel + a Content·Delivery breakdown on the review page. Caveat:
+  the STT model (`gpt-4o-mini-transcribe`) cleans most "um/uh", so real filler counts
+  undercount until Tier-2 (word-timestamp STT + mic volume).
+- **Single Overview dashboard** ([[Decisions/0027-single-overview-dashboard]]): folded the
+  separate Interview Sessions + Analytics tabs into the Overview. Project nav is now
+  **Overview / Resources / AI Briefing / Settings** only.
+  `components/project/project-dashboard.tsx` composes Interviews (+ New Interview), Score
+  progression & highlights, Coaching plan, and Practice stats. Retired and **deleted**
+  `section-tiles.tsx` + `project-analytics.tsx`; the analytics computation moved to
+  `lib/analytics.ts` and the tiles are re-composed from `analytics-widgets.tsx`. Old
+  `?tab=sessions|analytics` deep links fall through to the dashboard.
+- **One-click to review**: a completed interview card now links straight to its
+  review/debrief instead of the "This interview is complete → View review" interstitial.
+- **Dashboard "Delivery" summary replaces "Answer length"**: answer length swings with the
+  question, not the candidate. The Overview now shows a project-wide delivery read —
+  average delivery score + tier + trend, with per-dimension meters averaged across every
+  interview (`getProjectAnalytics` aggregates `summary.delivery`; `DeliverySummaryTile` in
+  `analytics-widgets.tsx`). The review page's "Back to interview" button also became
+  "Back to overview".
+- **Delivery reworked to substance + habits** (updates
+  [[Decisions/0026-delivery-analysis-baked-into-score]]): after a design review, added
+  **substance** dimensions — Specificity, Structure, Directness — judged by the LLM that
+  *already* evaluates each answer (`answerEvaluationSchema.communication`), averaged into
+  the session delivery. **Habits** (pace / hedging / filler words) stay deterministic;
+  substance is weighted higher. **Ownership** ("I" vs "we") was demoted from a scored
+  metric to a neutral **observation** (its ideal ratio is context-dependent and scoring it
+  risks bias). Filler words are now visibly tagged **"approx."** (STT limitation). Delivery
+  panel + dashboard tile updated; the "How is this scored?" copy too. `answers.feedback`
+  jsonb now carries `communication`.
+- **Redo an interview ("Practice again")**: the review page's "Ready for another round?"
+  card opens the Configure dialog prefilled with that interview's setup
+  (`ConfigureInterviewDialog` gained `initialConfig` / `triggerLabel` / `title`).
+  Generating creates a *new* session — adaptive generation already targets weak areas and
+  avoids repeats, so a redo is fresh-but-related questions, not rote replay.
+- **Score-trend restyled from a line to "capped bars"** (updates
+  [[Decisions/0024-recharts-for-charts]]): one bar per interview — a bright tier-colored
+  rounded cap floating over a soft faded fill of the same hue (a custom Recharts `Bar`
+  shape + per-tier gradient defs). Kept tier colors, gridlines, the dashed average line,
+  and the hover tooltip. Tradeoff: the x-axis moved from honest time-spacing to
+  evenly-spaced categories (one bar each; dates still labeled) — bars read cleaner evenly
+  spaced, so cadence is no longer encoded in x-position (the Practice cadence tile carries
+  that).
+- **Layout → top nav + persistent interview rail** ([[Decisions/0028-top-nav-and-interview-rail]]):
+  the vertical section rail became a horizontal **pill nav** on top (active = teal
+  `--badge-accent`), and interviews moved into a **persistent left rail** (inbox-style)
+  that stays mounted and highlights the open interview while you're inside it. New
+  `project-top-nav.tsx`, `interview-rail.tsx`, `project-shell.tsx`; the rail + nav live in
+  `[projectId]/layout.tsx`. Focused sections (Resources / AI Briefing / Settings) stay
+  full-width. Dashboard dropped its Interviews section; `project-sidebar.tsx` +
+  `session-list.tsx` deleted.
+- **Delivery meters → ticked/equalizer style** (`components/tick-meter.tsx`): the
+  delivery metric bars (review Delivery panel + dashboard Delivery tile) became rows of
+  thin vertical ticks, filled in the tier color up to the value and faded after — matching
+  a reference dashboard look. Tier colors preserved. `TickMeter` is reusable (sm/md sizes).
+- Review page **grouping trays** (`bg-accent` containers, no border): the summary cards
+  (Strengths / Areas to improve / Questions to revisit / Recommended practice) and the
+  **Transcript** (now a responsive 2-col grid, 1-col below `lg`) each sit as white tiles
+  inside a tinted parent panel.
+- **Consistent score treatment on the Overview**: the Average score and Delivery tiles now
+  share one header — a tier **`ScoreDisc`** (larger tinted circle) + tier chip + "average
+  across N interviews" (Delivery keeps its trend delta) — matching the rail cards' circle
+  look. The score-trend hover tooltip now titles each point by **interview type** (e.g.
+  "Product") instead of "Interview N", and shows the score in a tier circle + chip +
+  "difficulty · duration".
+- Overview "Score progression": dropped the standalone **Average score** tile — the
+  average now reads as "avg N · M interviews" in the Score trend tile header. The two
+  remaining tiles (Score trend + Delivery) sit in a `bg-accent` grouping tray.
+- **AI Coaching Plan restructured** into distinct labeled sections: a Progress callout
+  (tinted, trend icon), Focus areas (icon-labeled; each a card with a teal numbered badge +
+  a nested "Practice" drill box), Keep doing (check-icon list), and a Suggested-next-interview
+  callout. `PlanSection` helper in `coaching-plan-panel.tsx`.
+- Coaching plan's **"Suggested next interview" gained a "Start this interview" button** —
+  reuses `ConfigureInterviewDialog` with `initialConfig` prefilled to the recommended type
+  + difficulty, so one click opens the (prefilled) configure dialog → Generate → into the
+  runner. (`hasBriefing` passed true: a coaching plan implies prior completed interviews,
+  and `createInterviewSession` re-checks anyway.)
+- **Practice moved from the project to the home page, as a cross-project punch-card**
+  ([[Decisions/0029-practice-punchcard-at-home]]): removed the project dashboard's Practice
+  section; added `components/practice-punchcard.tsx` (data from `lib/practice.ts`) to
+  `app/(app)/page.tsx` — a GitHub-contribution-style day grid across *every* project +
+  "N sessions · X hrs · across M projects". Deliberately a calm punch-card, **not** a
+  streak (the user's Duolingo reference conflicts with PRODUCT.md's no-gamification rule;
+  they chose the calm version). Iterated the layout to a **wide, thin banner**: stats moved
+  into the header laid out **horizontally** (top-right), the full-width day-band below with
+  bigger `size-5` cells, range + legend in the footer. The span's minimum was widened
+  (4 → 18 weeks) so the squares spread as a band rather than a cramped left-hugging block.
+- Deployed state note: as of this entry, everything after the 2026-08-02 Recharts push
+  is committed locally but **not yet pushed** — the live Vercel site lags this work.
+
 ## 2026-08-02 — Score-trend chart upgraded to Recharts
 
 - **Analytics "Score trend" is now a real charting-library graph** (`recharts@3`,

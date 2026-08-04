@@ -43,7 +43,11 @@ function OptionSelect({
   label: string;
   value: string;
   onChange: (value: string) => void;
-  options: readonly { value: string; label: string }[];
+  options: readonly {
+    value: string;
+    label: string;
+    description?: string;
+  }[];
 }) {
   return (
     <div className="space-y-2">
@@ -56,7 +60,11 @@ function OptionSelect({
         </SelectTrigger>
         <SelectContent>
           {options.map((opt) => (
-            <SelectItem key={opt.value} value={opt.value}>
+            <SelectItem
+              key={opt.value}
+              value={opt.value}
+              description={opt.description}
+            >
               {opt.label}
             </SelectItem>
           ))}
@@ -66,31 +74,55 @@ function OptionSelect({
   );
 }
 
+/** Prefill values (all strings, matching the selects) for "Practice again". */
+export type InterviewConfigDefaults = {
+  interviewType?: string;
+  difficulty?: string;
+  interviewerPersonality?: string;
+  conversationMode?: string;
+  lengthMinutes?: string;
+  interviewerVoice?: string;
+  playbackRate?: string;
+};
+
 export function ConfigureInterviewDialog({
   projectId,
   hasBriefing,
   completedSessionCount = 0,
+  initialConfig,
+  triggerLabel = "New Interview",
+  title = "Configure Interview",
 }: {
   projectId: string;
   hasBriefing: boolean;
   completedSessionCount?: number;
+  /** Seed the form from a past interview (the "Practice again" flow). */
+  initialConfig?: InterviewConfigDefaults;
+  triggerLabel?: React.ReactNode;
+  title?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [interviewType, setInterviewType] = useState<string>(
-    INTERVIEW_TYPE_OPTIONS[0].value,
+    initialConfig?.interviewType ?? INTERVIEW_TYPE_OPTIONS[0].value,
   );
-  const [difficulty, setDifficulty] = useState<string>(DIFFICULTY_OPTIONS[1].value);
+  const [difficulty, setDifficulty] = useState<string>(
+    initialConfig?.difficulty ?? DIFFICULTY_OPTIONS[1].value,
+  );
   const [interviewerPersonality, setInterviewerPersonality] = useState<string>(
-    PERSONALITY_OPTIONS[0].value,
+    initialConfig?.interviewerPersonality ?? PERSONALITY_OPTIONS[0].value,
   );
   const [conversationMode, setConversationMode] = useState<string>(
-    CONVERSATION_MODE_OPTIONS[0].value,
+    initialConfig?.conversationMode ?? CONVERSATION_MODE_OPTIONS[0].value,
   );
-  const [lengthMinutes, setLengthMinutes] = useState<string>(LENGTH_OPTIONS[1].value);
+  const [lengthMinutes, setLengthMinutes] = useState<string>(
+    initialConfig?.lengthMinutes ?? LENGTH_OPTIONS[1].value,
+  );
   const [interviewerVoice, setInterviewerVoice] = useState<string>(
-    VOICE_OPTIONS[0].value,
+    initialConfig?.interviewerVoice ?? VOICE_OPTIONS[0].value,
   );
-  const [playbackRate, setPlaybackRate] = useState<string>(PLAYBACK_OPTIONS[1].value);
+  const [playbackRate, setPlaybackRate] = useState<string>(
+    initialConfig?.playbackRate ?? PLAYBACK_OPTIONS[1].value,
+  );
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -125,10 +157,10 @@ export function ConfigureInterviewDialog({
   return (
     <div className="flex flex-col items-end gap-1">
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger render={<Button disabled={!hasBriefing}>New Interview</Button>} />
+        <DialogTrigger render={<Button disabled={!hasBriefing}>{triggerLabel}</Button>} />
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Configure Interview</DialogTitle>
+            <DialogTitle>{title}</DialogTitle>
             {completedSessionCount > 0 && (
               <DialogDescription>
                 Adapts to your{" "}
@@ -168,20 +200,13 @@ export function ConfigureInterviewDialog({
               onChange={setConversationMode}
               options={CONVERSATION_MODE_OPTIONS}
             />
-            <OptionSelect
-              id="interview-length"
-              label="Length"
-              value={lengthMinutes}
-              onChange={setLengthMinutes}
-              options={LENGTH_OPTIONS}
-            />
             <div className="grid grid-cols-2 gap-4">
               <OptionSelect
-                id="interview-voice"
-                label="Interviewer Voice"
-                value={interviewerVoice}
-                onChange={setInterviewerVoice}
-                options={VOICE_OPTIONS}
+                id="interview-length"
+                label="Length"
+                value={lengthMinutes}
+                onChange={setLengthMinutes}
+                options={LENGTH_OPTIONS}
               />
               <OptionSelect
                 id="interview-playback"
@@ -191,6 +216,13 @@ export function ConfigureInterviewDialog({
                 options={PLAYBACK_OPTIONS}
               />
             </div>
+            <OptionSelect
+              id="interview-voice"
+              label="Interviewer Voice"
+              value={interviewerVoice}
+              onChange={setInterviewerVoice}
+              options={VOICE_OPTIONS}
+            />
             {error && <p className="text-sm text-destructive">{error}</p>}
             <DialogFooter>
               <Button type="submit" disabled={isPending}>

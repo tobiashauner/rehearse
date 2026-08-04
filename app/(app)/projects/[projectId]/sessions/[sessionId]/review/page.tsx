@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { RotateCcw, SquareCheckBig } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ConfigureInterviewDialog } from "@/components/interview/configure-interview-dialog";
 import {
   Card,
   CardContent,
@@ -10,8 +12,21 @@ import {
 } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/server";
 import { ensureSessionSummary } from "@/app/(app)/projects/[projectId]/sessions/[sessionId]/actions";
+import { ScoreGauge } from "@/components/score-gauge";
+import { ScoreExplainer } from "@/components/score-explainer";
+import { ScorePill } from "@/components/score-badge";
+import { DeliveryPanel } from "@/components/delivery-panel";
+import { scoreTier } from "@/lib/scoring";
+import { cn } from "@/lib/utils";
 import type { SessionSummary } from "@/lib/prompts/session-summary";
+import type { DeliveryReport } from "@/lib/delivery";
 import type { AnswerEvaluation } from "@/lib/prompts/answer-evaluation";
+
+/** Summary as stored: the LLM debrief plus the folded-in delivery read. */
+type StoredSummary = SessionSummary & {
+  contentScore?: number;
+  delivery?: DeliveryReport | null;
+};
 
 function formatDuration(seconds: number | null): string | null {
   if (seconds == null) return null;
@@ -31,7 +46,7 @@ export default async function ReviewSessionPage({
   const { data: session } = await supabase
     .from("interview_sessions")
     .select(
-      "id, status, overall_score, summary, duration_seconds, completed_at",
+      "id, status, overall_score, summary, duration_seconds, completed_at, interview_type, difficulty, interviewer_personality, conversation_mode, length_minutes, interviewer_voice, playback_rate",
     )
     .eq("id", sessionId)
     .eq("project_id", projectId)
@@ -71,7 +86,8 @@ export default async function ReviewSessionPage({
     }
   }
 
-  const summary = session.summary as SessionSummary | null;
+  const summary = session.summary as StoredSummary | null;
+  const delivery = summary?.delivery ?? null;
 
   // Transcript: questions in the order they were asked, with their answers.
   const { data: questions } = await supabase
@@ -116,6 +132,32 @@ export default async function ReviewSessionPage({
 
   const duration = formatDuration(session.duration_seconds);
 
+  // For "Practice again": prefill the configure dialog with this interview's
+  // setup. Gate on a briefing still existing; show how many past sessions the
+  // new one will adapt to.
+  const [{ data: briefing }, { count: completedCount }] = await Promise.all([
+    supabase
+      .from("ai_briefings")
+      .select("project_id")
+      .eq("project_id", projectId)
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("interview_sessions")
+      .select("id", { count: "exact", head: true })
+      .eq("project_id", projectId)
+      .eq("status", "completed"),
+  ]);
+  const redoConfig = {
+    interviewType: session.interview_type,
+    difficulty: session.difficulty,
+    interviewerPersonality: session.interviewer_personality,
+    conversationMode: session.conversation_mode,
+    lengthMinutes: String(session.length_minutes),
+    interviewerVoice: session.interviewer_voice,
+    playbackRate: String(session.playback_rate),
+  };
+
   return (
     <div className="space-y-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -129,29 +171,69 @@ export default async function ReviewSessionPage({
         <Button
           variant="outline"
           nativeButton={false}
-          render={<Link href={interviewHref} />}
+          render={<Link href={`/projects/${projectId}`} />}
         >
-          Back to interview
+          Back to overview
         </Button>
       </div>
 
       {summary ? (
         <>
           <Card>
-            <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center">
-              <div className="flex size-20 shrink-0 items-center justify-center rounded-2xl bg-primary/15 text-3xl font-semibold text-primary tabular-nums">
-                {Math.round(summary.overallScore)}
-              </div>
-              <div className="space-y-1">
-                <p className="text-sm font-medium text-muted-foreground">
-                  Overall score
-                </p>
-                <p className="text-lg">{summary.headline}</p>
+            <CardContent className="flex flex-col gap-5 sm:flex-row sm:items-center">
+              <ScoreGauge score={summary.overallScore} />
+              <div className="space-y-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Overall score
+                  </p>
+                  <span
+                    className={cn(
+                      "rounded-4xl px-2 py-0.5 text-xs font-semibold",
+                      scoreTier(summary.overallScore).soft,
+                      scoreTier(summary.overallScore).text,
+                    )}
+                  >
+                    {scoreTier(summary.overallScore).label}
+                  </span>
+                </div>
+                <p className="text-lg leading-snug">{summary.headline}</p>
+                {delivery && summary.contentScore != null && (
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                    <span className="inline-flex items-center gap-1.5">
+                      <span
+                        className={cn(
+                          "size-2 rounded-full",
+                          scoreTier(summary.contentScore).dot,
+                        )}
+                      />
+                      Content{" "}
+                      <span className="font-medium text-foreground tabular-nums">
+                        {summary.contentScore}
+                      </span>
+                    </span>
+                    <span className="inline-flex items-center gap-1.5">
+                      <span
+                        className={cn(
+                          "size-2 rounded-full",
+                          scoreTier(delivery.score).dot,
+                        )}
+                      />
+                      Delivery{" "}
+                      <span className="font-medium text-foreground tabular-nums">
+                        {delivery.score}
+                      </span>
+                    </span>
+                  </div>
+                )}
+                <ScoreExplainer />
               </div>
             </CardContent>
           </Card>
 
-          <div className="grid gap-6 md:grid-cols-2">
+          {delivery && <DeliveryPanel report={delivery} />}
+
+          <div className="grid gap-3 rounded-2xl bg-accent p-3 sm:gap-4 sm:p-4 md:grid-cols-2">
             <ReviewList title="Strengths" items={summary.strengths} />
             <ReviewList title="Areas to improve" items={summary.weaknesses} />
             <ReviewList
@@ -176,22 +258,39 @@ export default async function ReviewSessionPage({
           <div>
             <p className="text-sm font-medium">Ready for another round?</p>
             <p className="text-sm text-muted-foreground">
-              Your next interview adapts to this performance — new questions
-              targeting the areas above.
+              Run it back with the same setup — fresh questions that target the
+              areas above, so you can see if you&apos;ve improved.
             </p>
           </div>
-          <Button
-            nativeButton={false}
-            render={<Link href={`/projects/${projectId}?tab=sessions`} />}
-          >
-            Plan next interview
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              nativeButton={false}
+              render={<Link href={`/projects/${projectId}`} />}
+            >
+              Back to overview
+            </Button>
+            <ConfigureInterviewDialog
+              projectId={projectId}
+              hasBriefing={!!briefing}
+              completedSessionCount={completedCount ?? 0}
+              initialConfig={redoConfig}
+              triggerLabel={
+                <>
+                  <RotateCcw data-icon="inline-start" />
+                  Practice again
+                </>
+              }
+              title="Practice again"
+            />
+          </div>
         </CardContent>
       </Card>
 
       <div className="space-y-4">
         <h2 className="text-lg font-medium">Transcript</h2>
-        {transcript.map((q, index) => {
+        <div className="grid items-start gap-3 rounded-2xl bg-accent p-3 sm:gap-4 sm:p-4 lg:grid-cols-2">
+          {transcript.map((q, index) => {
           const answer = answerByQuestion.get(q.id)!;
           const feedback = answer.feedback as AnswerEvaluation | null;
           const audioPath = answer.audio_storage_path as string | null;
@@ -205,9 +304,7 @@ export default async function ReviewSessionPage({
                   </span>
                   {q.category && <Badge variant="accent">{q.category}</Badge>}
                   {answer.score != null && (
-                    <Badge variant="outline" className="tabular-nums">
-                      {Math.round(answer.score as number)}/100
-                    </Badge>
+                    <ScorePill score={Number(answer.score)} />
                   )}
                 </div>
                 <CardTitle className="text-base leading-snug font-medium">
@@ -241,6 +338,7 @@ export default async function ReviewSessionPage({
             </Card>
           );
         })}
+        </div>
       </div>
     </div>
   );
@@ -254,9 +352,12 @@ function ReviewList({ title, items }: { title: string; items: string[] }) {
       </CardHeader>
       <CardContent>
         {items && items.length > 0 ? (
-          <ul className="list-disc space-y-1.5 pl-5 text-sm text-muted-foreground">
+          <ul className="space-y-2.5 text-sm text-foreground/80">
             {items.map((item, i) => (
-              <li key={i}>{item}</li>
+              <li key={i} className="flex items-start gap-2.5">
+                <SquareCheckBig className="mt-0.5 size-4.5 shrink-0 text-badge-accent" />
+                <span>{item}</span>
+              </li>
             ))}
           </ul>
         ) : (

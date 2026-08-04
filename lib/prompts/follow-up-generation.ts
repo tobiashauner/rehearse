@@ -1,5 +1,9 @@
 import { z } from "zod";
 import type OpenAI from "openai";
+import {
+  isInterruptive,
+  personalityPrompt,
+} from "@/lib/interview-personality";
 
 export const followUpGenerationSchema = z.object({
   shouldFollowUp: z
@@ -45,16 +49,27 @@ export function buildFollowUpGenerationMessages({
   answer,
   upcomingTopics,
 }: FollowUpGenerationInput): OpenAI.ChatCompletionMessageParam[] {
+  const interruptive = isInterruptive(config.interviewerPersonality);
+
+  const system = interruptive
+    ? "You are a realistic interviewer who INTERRUPTS OFTEN, deciding whether to cut in " +
+      "with ONE follow-up to the candidate's last answer. Lean toward following up: cut in " +
+      "whenever the answer rambles, hedges, stays vague, or leaves a claim unsupported — err " +
+      "on the side of asking. Phrase the follow-up as an interruption that cuts them off, " +
+      'opening with something like "Let me stop you there —", "Hold on —", or "Quick —", ' +
+      "then a short, pointed question. Do NOT ask something already planned as an upcoming " +
+      "topic. Only set shouldFollowUp to false if the answer was genuinely tight and complete."
+    : "You are a realistic interviewer deciding whether to ask ONE natural follow-up " +
+      "to the candidate's last answer, the way a real interviewer would when something " +
+      "is vague, incomplete, or genuinely interesting. Only follow up when it adds real " +
+      "value — probing a claim, asking for specifics/metrics, or digging into a tradeoff. " +
+      "Do NOT follow up just to fill space, and do NOT ask something already planned as " +
+      "an upcoming topic. Match the interviewer's personality. When in doubt, don't.";
+
   return [
     {
       role: "system",
-      content:
-        "You are a realistic interviewer deciding whether to ask ONE natural follow-up " +
-        "to the candidate's last answer, the way a real interviewer would when something " +
-        "is vague, incomplete, or genuinely interesting. Only follow up when it adds real " +
-        "value — probing a claim, asking for specifics/metrics, or digging into a tradeoff. " +
-        "Do NOT follow up just to fill space, and do NOT ask something already planned as " +
-        "an upcoming topic. Match the interviewer's personality. When in doubt, don't.",
+      content: system,
     },
     {
       role: "user",
@@ -63,7 +78,7 @@ export function buildFollowUpGenerationMessages({
         (project.role ? ` — ${project.role}` : "") +
         (project.company ? ` @ ${project.company}` : "") +
         `\nInterview type: ${config.interviewType} · Difficulty: ${config.difficulty} · ` +
-        `Interviewer style: ${config.interviewerPersonality}\n\n` +
+        `Interviewer style: ${personalityPrompt(config.interviewerPersonality)}\n\n` +
         `Question just asked (${question.category ?? "general"}):\n${question.question}\n\n` +
         `Candidate's answer:\n${answer.trim() || "(no answer given)"}\n\n` +
         (upcomingTopics.length

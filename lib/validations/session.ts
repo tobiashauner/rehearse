@@ -1,36 +1,121 @@
 import { z } from "zod";
 
 export const INTERVIEW_TYPE_OPTIONS = [
-  { value: "behavioral", label: "Behavioral" },
-  { value: "technical", label: "Technical" },
-  { value: "product", label: "Product" },
-  { value: "leadership", label: "Leadership" },
-  { value: "panel", label: "Panel" },
-  { value: "recruiter_screen", label: "Recruiter Screen" },
-  { value: "hiring_manager", label: "Hiring Manager" },
-  { value: "executive", label: "Executive" },
+  {
+    value: "behavioral",
+    label: "Behavioral",
+    description: "Past experiences — how you handled real situations (STAR).",
+  },
+  {
+    value: "technical",
+    label: "Technical",
+    description: "Role-specific technical depth and problem-solving.",
+  },
+  {
+    value: "product",
+    label: "Product",
+    description: "Product sense — user problems, tradeoffs, prioritization.",
+  },
+  {
+    value: "leadership",
+    label: "Leadership",
+    description: "Leading people, influence, and hard decisions.",
+  },
+  {
+    value: "panel",
+    label: "Panel",
+    description: "Multiple angles in one sitting, with varied focus.",
+  },
+  {
+    value: "recruiter_screen",
+    label: "Recruiter Screen",
+    description: "First-round fit, motivation, and logistics check.",
+  },
+  {
+    value: "hiring_manager",
+    label: "Hiring Manager",
+    description: "Depth on the role and how you'd operate on the team.",
+  },
+  {
+    value: "executive",
+    label: "Executive",
+    description: "Strategy, vision, and high-stakes judgment.",
+  },
 ] as const;
 
 export const DIFFICULTY_OPTIONS = [
-  { value: "easy", label: "Easy" },
-  { value: "medium", label: "Medium" },
-  { value: "hard", label: "Hard" },
+  {
+    value: "easy",
+    label: "Easy",
+    description: "Warm-up level — approachable and forgiving.",
+  },
+  {
+    value: "medium",
+    label: "Medium",
+    description: "A realistic bar for most interviews.",
+  },
+  {
+    value: "hard",
+    label: "Hard",
+    description: "Senior, demanding bar — probing and unforgiving.",
+  },
 ] as const;
 
 export const PERSONALITY_OPTIONS = [
-  { value: "friendly", label: "Friendly" },
-  { value: "direct", label: "Direct" },
-  { value: "analytical", label: "Analytical" },
-  { value: "skeptical", label: "Skeptical" },
-  { value: "fast_paced", label: "Fast-paced" },
-  { value: "interrupts_often", label: "Interrupts often" },
-  { value: "pushes_for_metrics", label: "Pushes for metrics" },
-  { value: "challenges_assumptions", label: "Challenges assumptions" },
+  {
+    value: "friendly",
+    label: "Friendly",
+    description: "Warm and encouraging — puts you at ease.",
+  },
+  {
+    value: "direct",
+    label: "Direct",
+    description: "Businesslike and brisk; wants tight answers.",
+  },
+  {
+    value: "analytical",
+    label: "Analytical",
+    description: "Digs into your reasoning and tradeoffs.",
+  },
+  {
+    value: "skeptical",
+    label: "Skeptical",
+    description: "Doubts unbacked claims and makes you justify them.",
+  },
+  {
+    value: "fast_paced",
+    label: "Fast-paced",
+    description: "Moves quickly and expects you to keep up.",
+  },
+  {
+    value: "interrupts_often",
+    label: "Interrupts often",
+    description:
+      "Cuts in when you ramble or get vague, and redirects with pointed follow-ups.",
+  },
+  {
+    value: "pushes_for_metrics",
+    label: "Pushes for metrics",
+    description: "Keeps asking for numbers and measurable outcomes.",
+  },
+  {
+    value: "challenges_assumptions",
+    label: "Challenges assumptions",
+    description: "Pushes back on your framing with counterexamples.",
+  },
 ] as const;
 
 export const CONVERSATION_MODE_OPTIONS = [
-  { value: "adaptive", label: "Adaptive" },
-  { value: "fixed", label: "Fixed questions" },
+  {
+    value: "adaptive",
+    label: "Adaptive",
+    description: "Questions and follow-ups adapt to your answers.",
+  },
+  {
+    value: "fixed",
+    label: "Fixed questions",
+    description: "A set list of questions, asked as planned.",
+  },
 ] as const;
 
 export const LENGTH_OPTIONS = [

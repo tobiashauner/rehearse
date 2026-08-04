@@ -267,7 +267,7 @@ export function InterviewRunner({
       return;
     }
     toast.success("Interview paused — resume whenever you're ready.");
-    router.push(`/projects/${projectId}?tab=sessions`);
+    router.push(`/projects/${projectId}`);
     router.refresh();
   }
 
