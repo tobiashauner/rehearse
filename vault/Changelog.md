@@ -4,6 +4,28 @@ Dated log of actual work sessions on this app. Add a new entry at the end of eac
 that changes the app (newest at top). Keep entries short — what changed and why, not a
 diff.
 
+## 2026-08-04 — Landing page repositioned against the "why not just ChatGPT?" objection
+
+Reworked `app/welcome/page.tsx` copy + structure to stop selling on commodity AI capability
+(realistic mock interview / voice / feedback — all things ChatGPT does natively) and lead
+instead with the two things a generic chatbot structurally can't produce: **longitudinal
+progress proof** (a score curve held to one rubric across sessions) and **delivery
+analytics** (pace / fillers / hedging / ownership). Added a new progress-proof band right
+after "How it works" and a new delivery section before scoring; sharpened the hero subcopy,
+metadata, and the sub-CTA line ("Not one AI mock interview — a system that makes you
+better"). Thesis line, no competitor named: *"Anyone can ask an AI to run one mock
+interview. Only Rehearse can show you the next one is going better than the last."* Instead
+of static screenshots, the two proof surfaces are **live SVG/CSS mini-demos** in
+`components/welcome/landing-demos.tsx` (`ScoreTrendDemo`, `DeliveryDemo`) — faithful
+miniatures of `score-trend-chart.tsx` (capped tier-colored bars, gridlines, dashed avg) and
+`delivery-panel.tsx` (score + tier chip, ticked metric meters). They reuse the product's
+`scoreTier`/tier tokens and the tick-meter treatment, reveal on scroll-in via
+IntersectionObserver, and honor `prefers-reduced-motion` (same pattern as the existing
+landing carousels) — crisper than PNGs and self-updating with the token system. Also fixed a
+1px hairline seam under the petrol `Curve` transitions (fill now overshoots the viewBox with
+`overflow-visible`). Positioning rationale (commodity vs. defensible) lives in the session
+thread, not yet an ADR.
+
 ## 2026-08-04 — Home page split into projects + right rail
 
 - **Home is now a two-column layout** ([[Decisions/0029-practice-punchcard-at-home]]):

@@ -10,12 +10,16 @@ import {
   CoachingCarousel,
   ScoringCarousel,
 } from "@/components/welcome/landing-carousels";
+import {
+  DeliveryDemo,
+  ScoreTrendDemo,
+} from "@/components/welcome/landing-demos";
 import "./welcome.css";
 
 export const metadata: Metadata = {
   title: "Rehearse — walk in already rehearsed",
   description:
-    "Realistic AI mock interviews built from your resume, the job description, and the company you're chasing — with feedback that coaches, not grades.",
+    "Anyone can ask an AI to run one mock interview. Rehearse is built to make you measurably better by the one that counts — a rubric held steady across sessions, delivery habits measured on every answer, and a score curve you can watch bend upward.",
 };
 
 /*
@@ -52,12 +56,16 @@ function Curve({ flip = false }: { flip?: boolean }) {
       preserveAspectRatio="none"
       aria-hidden="true"
       className={cn(
-        "block h-[clamp(2.25rem,6vw,5rem)] w-full",
+        "block h-[clamp(2.25rem,6vw,5rem)] w-full overflow-visible",
         flip && "rotate-180",
       )}
     >
+      {/* Fill runs past the viewBox bottom (y=84 → 90) so the background
+          paints over the ~1px sub-pixel seam that preserveAspectRatio="none"
+          otherwise leaves, where the petrol container peeked through under
+          the curve. overflow-visible lets the overshoot render. */}
       <path
-        d="M0,50 C180,10 400,0 720,26 C1040,52 1260,74 1440,34 L1440,84 L0,84 Z"
+        d="M0,50 C180,10 400,0 720,26 C1040,52 1260,74 1440,34 L1440,90 L0,90 Z"
         fill="var(--background)"
       />
     </svg>
@@ -113,9 +121,10 @@ export default function WelcomePage() {
               style={{ "--rise-delay": "0.08s" } as React.CSSProperties}
             >
               Rehearse builds a realistic mock interview from your resume, the
-              job description, and the company you&apos;re after — asks its
-              questions out loud, listens to your answers, and coaches you
-              between sessions.
+              job description, and the company you&apos;re after — asks out
+              loud, listens to how you answer, and remembers every session so
+              you can watch yourself get sharper before the interview that
+              counts.
             </p>
             <div
               className="welcome-rise mt-9 flex flex-wrap items-center gap-x-5 gap-y-3"
@@ -130,7 +139,7 @@ export default function WelcomePage() {
                 <ArrowRight data-icon="inline-end" />
               </AuthPopover>
               <p className="text-sm text-white/70">
-                Your materials, your questions — no fixed question bank.
+                Not one AI mock interview — a system that makes you better.
               </p>
             </div>
           </div>
@@ -227,8 +236,30 @@ export default function WelcomePage() {
           </div>
         </section>
 
+        {/* ————— Proof you're getting better: the artifact a chatbot can't
+             produce. Score, held to one rubric, plotted across sessions. ————— */}
+        <section className="mx-auto grid w-full max-w-6xl items-center gap-x-14 gap-y-10 px-6 py-[clamp(3rem,8vh,6rem)] max-lg:justify-items-center lg:grid-cols-[1.2fr_0.8fr]">
+          <div className="max-w-lg">
+            <h2 className="text-[clamp(1.75rem,3vw,2.375rem)] leading-tight font-medium tracking-[-0.015em] [text-wrap:balance]">
+              See yourself getting better.
+            </h2>
+            <p className="mt-4 leading-relaxed text-foreground/80">
+              Rehearse scores every answer against the same rubric, session
+              after session, and keeps all of it. So instead of a fresh
+              opinion each time you practice, you get a line you can watch bend
+              upward — the questions you still fumble, the habits that are
+              fading, the areas already sharp.
+            </p>
+            <p className="mt-4 font-medium">
+              Anyone can ask an AI to run one mock interview. Only Rehearse can
+              show you that the next one is going better than the last.
+            </p>
+          </div>
+          <ScoreTrendDemo className="w-full max-w-md" />
+        </section>
+
         {/* ————— An interviewer, not a question bank ————— */}
-        <section className="mx-auto grid w-full max-w-6xl items-center gap-x-14 gap-y-10 px-6 py-[clamp(3rem,8vh,6rem)] lg:grid-cols-2">
+        <section className="mx-auto grid w-full max-w-6xl items-center gap-x-14 gap-y-10 px-6 py-[clamp(3rem,8vh,6rem)] max-lg:justify-items-center lg:grid-cols-2">
           <div className="max-w-lg">
             <Image
               src="/illustrations/styles.svg"
@@ -249,7 +280,7 @@ export default function WelcomePage() {
               down a script.
             </p>
           </div>
-          <div className="mx-auto w-full max-w-md rounded-2xl border bg-card p-6 shadow-resting lg:max-w-none">
+          <div className="w-full max-w-md rounded-2xl border bg-card p-6 shadow-resting lg:max-w-none">
             <p className="text-xs font-medium tracking-[0.01em] text-muted-foreground">
               Interviewer style
             </p>
@@ -290,8 +321,26 @@ export default function WelcomePage() {
           </div>
         </section>
 
+        {/* ————— Delivery: measures how you answer, not just what you say.
+             The other thing a chat you'd have to grade yourself can't. ————— */}
+        <section className="mx-auto grid w-full max-w-6xl items-center gap-x-14 gap-y-10 px-6 py-[clamp(3rem,8vh,6rem)] max-lg:justify-items-center lg:grid-cols-[0.8fr_1.2fr]">
+          <DeliveryDemo className="w-full max-w-md max-lg:order-last" />
+          <div className="max-w-lg">
+            <h2 className="text-[clamp(1.75rem,3vw,2.375rem)] leading-tight font-medium tracking-[-0.015em] [text-wrap:balance]">
+              It hears how you answer, not just what you say.
+            </h2>
+            <p className="mt-4 leading-relaxed text-foreground/80">
+              Rambling, filler words, hedging, ducking ownership — the habits
+              that quietly sink real interviews and that you can&apos;t hear in
+              your own voice. Rehearse measures them on every answer and folds
+              them into your score, so you fix how you come across, not just
+              what you meant to say.
+            </p>
+          </div>
+        </section>
+
         {/* ————— How scoring works: rotating feedback-card showcase ————— */}
-        <section className="mx-auto grid w-full max-w-6xl items-center gap-x-14 gap-y-10 px-6 py-[clamp(3rem,8vh,6rem)] lg:grid-cols-2">
+        <section className="mx-auto grid w-full max-w-6xl items-center gap-x-14 gap-y-10 px-6 py-[clamp(3rem,8vh,6rem)] max-lg:justify-items-center lg:grid-cols-2">
           <div className="max-w-lg">
             <h2 className="text-[clamp(1.75rem,3vw,2.375rem)] leading-tight font-medium tracking-[-0.015em] [text-wrap:balance]">
               A score with a reason behind it
@@ -314,7 +363,7 @@ export default function WelcomePage() {
               it.
             </p>
           </div>
-          <ScoringCarousel className="mx-auto w-full max-w-md lg:max-w-none" />
+          <ScoringCarousel className="w-full max-w-md lg:max-w-none" />
         </section>
 
         {/* ————— Coaching, not testing — petrol band with organic edges ————— */}
@@ -322,7 +371,7 @@ export default function WelcomePage() {
           <Curve flip />
         </div>
         <section className="bg-[oklch(0.40_0.12_200)] text-white">
-          <div className="mx-auto grid w-full max-w-6xl items-center gap-x-12 gap-y-16 px-6 py-[clamp(3rem,8vh,5.5rem)] lg:grid-cols-[1fr_0.9fr]">
+          <div className="mx-auto grid w-full max-w-6xl items-center gap-x-12 gap-y-16 px-6 py-[clamp(3rem,8vh,5.5rem)] max-lg:justify-items-center lg:grid-cols-[1fr_0.9fr]">
             <div className="max-w-lg">
               <h2 className="text-[clamp(1.875rem,3.4vw,2.625rem)] leading-tight font-medium tracking-[-0.015em] [text-wrap:balance]">
                 Coaching, not testing.
@@ -335,7 +384,7 @@ export default function WelcomePage() {
                 over months, the feedback stays specific and never punishing.
               </p>
             </div>
-            <CoachingCarousel className="mx-auto w-full max-w-md lg:max-w-none" />
+            <CoachingCarousel className="w-full max-w-md lg:max-w-none" />
           </div>
         </section>
         <div className="-mt-px bg-[oklch(0.40_0.12_200)]">
