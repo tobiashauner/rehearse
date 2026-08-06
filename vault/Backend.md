@@ -34,8 +34,8 @@ last-verified: 2026-07-03
   the Supabase CLI token from the macOS Keychain, service name "Supabase CLI"). Before
   this, `site_url` was the default `http://localhost:3000`, so confirmation/invite email
   links redirected to localhost. Emails sent **before** the change still carry the old
-  `redirect_to` — re-send those invites. Note: no in-app set-password flow exists for
-  invited users yet (see [[Auth-Flow]] "What's not built").
+  `redirect_to` — re-send those invites. Invited/reset users now have a set-password path
+  via `/reset-password` (see [[Auth-Flow]] "Password reset").
 
 ## AI spend cap
 
@@ -53,6 +53,14 @@ last-verified: 2026-07-03
   action, and the end-of-session summary is metered but **not** gated (a session you
   were allowed to run always gets its debrief). Blocked actions return
   `AI_LIMIT_MESSAGE` through the existing `{ error }` channel.
+
+## Service role / admin (2026-08-06)
+
+`SUPABASE_SERVICE_ROLE_KEY` (in `.env.local`) now backs a `server-only` admin client
+(`lib/supabase/admin.ts`) used only by the super-admin area — it bypasses RLS and exposes
+`auth.admin` (list users, ban/unban) for the usage report and user enable/disable. Always
+gated by `requireSuperAdmin()`. See [[Auth-Flow]] and
+[[Decisions/0031-super-admin-role-and-admin-area]].
 
 ## Database
 

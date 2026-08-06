@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronDown, LogOut, Search } from "lucide-react";
+import { ChevronDown, LogOut, Search, Shield } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Kbd } from "@/components/ui/kbd";
@@ -17,7 +17,15 @@ import {
 import { CommandMenu } from "@/components/command-menu";
 import { createClient } from "@/lib/supabase/client";
 
-export function AppHeader({ name, email }: { name: string; email: string }) {
+export function AppHeader({
+  name,
+  email,
+  isAdmin = false,
+}: {
+  name: string;
+  email: string;
+  isAdmin?: boolean;
+}) {
   const [searchOpen, setSearchOpen] = useState(false);
   const router = useRouter();
 
@@ -35,7 +43,9 @@ export function AppHeader({ name, email }: { name: string; email: string }) {
   async function handleSignOut() {
     const supabase = createClient();
     await supabase.auth.signOut();
-    router.push("/login");
+    // Home ("/") — the middleware shows the marketing page there for
+    // signed-out visitors, so this lands on the homepage, not /login.
+    router.push("/");
     router.refresh();
   }
 
@@ -88,6 +98,12 @@ export function AppHeader({ name, email }: { name: string; email: string }) {
                 <p className="font-medium">{name}</p>
                 <p className="truncate text-xs text-muted-foreground">{email}</p>
               </div>
+              {isAdmin && (
+                <DropdownMenuItem render={<Link href="/admin" />}>
+                  <Shield />
+                  Admin
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem onClick={handleSignOut}>
                 <LogOut />
                 Sign out

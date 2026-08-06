@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { AppHeader } from "@/components/app-header";
 import { createClient } from "@/lib/supabase/server";
+import { isSuperAdmin } from "@/lib/auth/admin";
 import { getDisplayName } from "@/lib/utils";
 
 export default async function AppLayout({
@@ -19,7 +20,11 @@ export default async function AppLayout({
 
   return (
     <div className="flex h-svh flex-col">
-      <AppHeader name={getDisplayName(user)} email={user.email ?? ""} />
+      <AppHeader
+        name={getDisplayName(user)}
+        email={user.email ?? ""}
+        isAdmin={isSuperAdmin(user)}
+      />
       <main className="min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto w-full max-w-7xl p-6 sm:p-10">{children}</div>
       </main>

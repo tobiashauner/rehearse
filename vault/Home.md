@@ -45,7 +45,8 @@ otherwise second-guess or redo: [[Decisions/0001-pnpm-and-shadcn-base-nova|0001]
 [[Decisions/0017-adaptive-interviews-automatic-not-opt-in|0017]],
 [[Decisions/0018-project-centric-ia-no-global-nav|0018]],
 [[Decisions/0019-sectioned-project-page-no-tabs|0019]],
-[[Decisions/0020-project-rail-and-summary-tiles|0020]].
+[[Decisions/0020-project-rail-and-summary-tiles|0020]],
+[[Decisions/0031-super-admin-role-and-admin-area|0031]].
 
 ## Environment
 
