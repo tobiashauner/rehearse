@@ -4,6 +4,55 @@ Dated log of actual work sessions on this app. Add a new entry at the end of eac
 that changes the app (newest at top). Keep entries short — what changed and why, not a
 diff.
 
+## 2026-08-06 — Password reset flow
+
+Self-serve password reset (was a lockout gap — no recovery existed). Uses the token_hash /
+`verifyOtp` pattern so it works cross-device (PKCE code-exchange doesn't). New: "Forgot
+password?" sub-view in `components/auth/auth-form.tsx` (browser `resetPasswordForEmail`,
+non-enumerating), `app/auth/confirm/route.ts` (GET → `verifyOtp` → redirect to `next`),
+`app/reset-password/page.tsx` + `components/auth/reset-password-form.tsx` (`updateUser`),
+reset schemas in `lib/validations/auth.ts`. Middleware now allowlists `/auth/confirm`.
+Recovery email template updated to a `{{ .TokenHash }}` link → `/auth/confirm`
+(`scripts/apply-auth-email-templates.mjs`, layout parametrized so other templates are
+unchanged). Also serves invited users (previously no set-password path) and doubles as a
+change-password page for signed-in users. See [[Auth-Flow]].
+Recovery template applied to the hosted project **manually via the dashboard** (2026-08-06)
+— the `apply-auth-email-templates.mjs` script 401'd on an expired Supabase CLI token, so
+run `supabase login` before using that script again (the other templates are unchanged).
+Full email round-trip is only testable on the deployed prod site (`{{ .SiteURL }}` base).
+
+## 2026-08-06 — Admin adoption report + page-level auth hardening
+
+Added an **Adoption** tab to the admin area (`/admin/adoption`) — see
+[[Decisions/0031-super-admin-role-and-admin-area]]. `lib/admin/adoption.ts`
+(`buildAdoptionReport`) aggregates `projects` + `interview_sessions` (cross-user via the
+service-role client, paginated past the 1000-row cap) with signup dates from the Admin API
+into: totals, a **weekly growth chart** (new users / projects / interviews — Recharts,
+`components/admin/adoption-chart.tsx`), an **activation funnel** (signed up → created project
+→ ran interview → completed → 2+ interviews), **repeat-usage ratios** (interviews per active
+user / per project, activation & retention %), **feature popularity** (interview type /
+difficulty / interviewer style / conversation mode), and a **per-user table** (projects,
+interviews, completed, joined, last active). Report UI in `components/admin/adoption-report.tsx`.
+
+Also **hardened auth**: added `requireSuperAdmin()` directly in every admin page
+(`/admin`, `/admin/adoption`, `/admin/users`), not just the layout — Next.js layouts aren't
+a reliable security boundary. Actions already re-checked independently.
+
+## 2026-08-06 — Super-admin role + admin area (usage report, enable/disable users)
+
+Added an owner-only admin capability with **no schema migration** — see
+[[Decisions/0031-super-admin-role-and-admin-area]]. Role lives in
+`auth.users.app_metadata.role = "super-admin"` (JWT claim, service-role-writable only).
+New pieces: `lib/supabase/admin.ts` (service-role client, `server-only`), `lib/auth/admin.ts`
+(`isSuperAdmin` + `requireSuperAdmin`), `lib/admin/data.ts` (list users, ban/unban,
+`buildUsageReport` over the `ai_usage_events` ledger). Routes under `app/(app)/admin/`:
+`/admin` (usage report — totals, spend by AI feature, spend per user) and `/admin/users`
+(list + enable/disable). "Disable" = Supabase ban (blocks sign-in, keeps all data); can't
+disable yourself or another super-admin (guarded in the server action + UI). Entry point is
+an "Admin" item in the account dropdown, shown only to super-admins (`isAdmin` boolean passed
+from the (app) layout). Installed the `server-only` package. Bootstrap the first admin with
+`node --env-file=.env.local scripts/grant-super-admin.mjs <email>` — no in-app grant UI yet.
+
 ## 2026-08-04 — Landing page repositioned against the "why not just ChatGPT?" objection
 
 Reworked `app/welcome/page.tsx` copy + structure to stop selling on commodity AI capability

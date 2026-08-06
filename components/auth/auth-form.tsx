@@ -5,10 +5,12 @@ import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   authSchema,
+  resetRequestSchema,
   signupSchema,
   type SignupValues,
 } from "@/lib/validations/auth";
 import { login, signup } from "@/app/login/actions";
+import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,6 +35,7 @@ export function AuthForm({
 }) {
   const [formError, setFormError] = useState<string | null>(null);
   const [needsConfirmation, setNeedsConfirmation] = useState(false);
+  const [view, setView] = useState<"auth" | "forgot">("auth");
   const [isPending, startTransition] = useTransition();
 
   const {
@@ -56,6 +59,10 @@ export function AuthForm({
         setNeedsConfirmation(true);
       }
     });
+  }
+
+  if (view === "forgot") {
+    return <ForgotView onBack={() => setView("auth")} />;
   }
 
   if (needsConfirmation) {
@@ -113,18 +120,114 @@ export function AuthForm({
           {mode === "sign-in" ? "Sign in" : "Create account"}
         </Button>
       </form>
+      <div className="flex flex-col gap-2">
+        <button
+          type="button"
+          className="text-left text-sm text-muted-foreground hover:underline"
+          onClick={() => {
+            setFormError(null);
+            onModeChange(mode === "sign-in" ? "sign-up" : "sign-in");
+          }}
+        >
+          {mode === "sign-in"
+            ? "Need an account? Create one"
+            : "Already have an account? Sign in"}
+        </button>
+        {mode === "sign-in" && (
+          <button
+            type="button"
+            className="text-left text-sm text-muted-foreground hover:underline"
+            onClick={() => {
+              setFormError(null);
+              setView("forgot");
+            }}
+          >
+            Forgot password?
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Request-a-reset-link sub-view. Calls resetPasswordForEmail from the browser;
+ * the reply is always framed as "sent" so we don't leak which emails have
+ * accounts. The email link routes through /auth/confirm to /reset-password.
+ */
+function ForgotView({ onBack }: { onBack: () => void }) {
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [sent, setSent] = useState(false);
+  const [isPending, startTransition] = useTransition();
+
+  function onSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    const parsed = resetRequestSchema.safeParse({ email });
+    if (!parsed.success) {
+      setError("Enter a valid email address.");
+      return;
+    }
+    setError(null);
+    startTransition(async () => {
+      const supabase = createClient();
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(
+        parsed.data.email,
+        { redirectTo: `${window.location.origin}/auth/confirm?next=/reset-password` },
+      );
+      // Don't reveal whether the address exists — always show "sent".
+      if (resetError) console.error("resetPasswordForEmail", resetError);
+      setSent(true);
+    });
+  }
+
+  if (sent) {
+    return (
+      <div className="space-y-4">
+        <p className="text-sm text-muted-foreground">
+          If an account exists for{" "}
+          <span className="text-foreground">{email}</span>, a link to reset your
+          password is on its way. Check your inbox.
+        </p>
+        <button
+          type="button"
+          className="text-sm text-muted-foreground hover:underline"
+          onClick={onBack}
+        >
+          Back to sign in
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <form className="space-y-4" onSubmit={onSubmit}>
+      <p className="text-sm text-muted-foreground">
+        Enter your email and we&apos;ll send a link to reset your password.
+      </p>
+      <div className="space-y-2">
+        <Label htmlFor="reset-email">Email</Label>
+        <Input
+          id="reset-email"
+          type="email"
+          autoComplete="email"
+          autoFocus
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+        />
+        {error && <p className="text-sm text-destructive">{error}</p>}
+      </div>
+      <Button type="submit" className="w-full" disabled={isPending}>
+        {isPending && <Spinner data-icon="inline-start" />}
+        Send reset link
+      </Button>
       <button
         type="button"
         className="text-sm text-muted-foreground hover:underline"
-        onClick={() => {
-          setFormError(null);
-          onModeChange(mode === "sign-in" ? "sign-up" : "sign-in");
-        }}
+        onClick={onBack}
       >
-        {mode === "sign-in"
-          ? "Need an account? Create one"
-          : "Already have an account? Sign in"}
+        Back to sign in
       </button>
-    </div>
+    </form>
   );
 }

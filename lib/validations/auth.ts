@@ -11,3 +11,20 @@ export const signupSchema = authSchema.extend({
 
 export type AuthValues = z.infer<typeof authSchema>;
 export type SignupValues = z.infer<typeof signupSchema>;
+
+export const resetRequestSchema = z.object({
+  email: z.string().email(),
+});
+
+export const resetPasswordSchema = z
+  .object({
+    password: z.string().min(8, "Password must be at least 8 characters"),
+    confirm: z.string(),
+  })
+  .refine((v) => v.password === v.confirm, {
+    message: "Passwords don't match",
+    path: ["confirm"],
+  });
+
+export type ResetRequestValues = z.infer<typeof resetRequestSchema>;
+export type ResetPasswordValues = z.infer<typeof resetPasswordSchema>;

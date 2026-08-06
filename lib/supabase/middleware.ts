@@ -53,7 +53,13 @@ export async function updateSession(request: NextRequest) {
         .forEach((cookie) => rewritten.cookies.set(cookie));
       return rewritten;
     }
-    if (pathname !== "/login" && pathname !== "/welcome") {
+    // `/auth/confirm` must run without a session — it's what establishes one
+    // from an email link (e.g. password recovery).
+    if (
+      pathname !== "/login" &&
+      pathname !== "/welcome" &&
+      pathname !== "/auth/confirm"
+    ) {
       const url = request.nextUrl.clone();
       url.pathname = "/login";
       return NextResponse.redirect(url);

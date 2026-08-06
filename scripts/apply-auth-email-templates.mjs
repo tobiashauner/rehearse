@@ -15,7 +15,7 @@ const AMBER = "#CA9E00";
 const AMBER_DOT = "#D69E2E";
 const PAPER = "#FAF8F3";
 
-function layout({ heading, body, cta, note }) {
+function layout({ heading, body, cta, note, url = "{{ .ConfirmationURL }}" }) {
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:${PAPER};padding:40px 16px;">
   <tr><td align="center">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background-color:#ffffff;border-radius:14px;border:1px solid #E8E5DD;">
@@ -24,10 +24,10 @@ function layout({ heading, body, cta, note }) {
         <div style="font-size:21px;font-weight:600;letter-spacing:-0.01em;color:${INK};padding-bottom:10px;">${heading}</div>
         <div style="font-size:15px;line-height:1.65;color:#55524A;padding-bottom:28px;">${body}</div>
         <div style="padding-bottom:28px;">
-          <a href="{{ .ConfirmationURL }}" style="display:inline-block;background-color:${AMBER};color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;padding:12px 26px;border-radius:10px;">${cta}</a>
+          <a href="${url}" style="display:inline-block;background-color:${AMBER};color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;padding:12px 26px;border-radius:10px;">${cta}</a>
         </div>
         <div style="font-size:13px;line-height:1.6;color:${MUTED};border-top:1px solid #EDEAE3;padding-top:20px;">
-          If the button doesn't work, <a href="{{ .ConfirmationURL }}" style="color:#00737C;">use this link instead</a>.<br>${note}
+          If the button doesn't work, <a href="${url}" style="color:#00737C;">use this link instead</a>.<br>${note}
         </div>
       </td></tr>
     </table>
@@ -82,6 +82,10 @@ const config = {
       "If that was you, choose a new password below.",
     cta: "Reset password",
     note: "If you didn't request a reset, you can safely ignore this email — your password is unchanged.",
+    // token_hash link → our /auth/confirm route (verifyOtp): works even when
+    // the link is opened on a different device than the request. SiteURL base
+    // so real users always hit production.
+    url: "{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/reset-password",
   }),
 
   mailer_subjects_email_change: "Confirm your new email address",
