@@ -187,6 +187,86 @@ export async function buildUsageReport(): Promise<UsageReport> {
   };
 }
 
+/* ————— Feedback report ————— */
+
+export type FeedbackItem = {
+  id: string;
+  rating: number;
+  comment: string | null;
+  pagePath: string | null;
+  createdAt: string;
+  email: string;
+  name: string | null;
+};
+
+export type FeedbackReport = {
+  total: number;
+  average: number;
+  satisfiedPct: number; // rating >= 4
+  distribution: { rating: number; count: number }[]; // ratings 1..5
+  items: FeedbackItem[];
+};
+
+/** All CSAT submissions, newest first, joined to submitter emails. */
+export async function buildFeedbackReport(): Promise<FeedbackReport> {
+  const admin = createAdminClient();
+
+  // Page past the 1000-row cap so counts/averages stay correct.
+  const pageSize = 1000;
+  const rows: {
+    id: string;
+    user_id: string;
+    rating: number;
+    comment: string | null;
+    page_path: string | null;
+    created_at: string;
+  }[] = [];
+  for (let from = 0; ; from += pageSize) {
+    const { data, error } = await admin
+      .from("user_feedback")
+      .select("id, user_id, rating, comment, page_path, created_at")
+      .order("created_at", { ascending: false })
+      .range(from, from + pageSize - 1);
+    if (error) throw error;
+    const batch = data ?? [];
+    rows.push(...batch);
+    if (batch.length < pageSize) break;
+  }
+
+  const users = await listAllUsers();
+  const userById = new Map(users.map((u) => [u.id, u]));
+
+  const distribution = [1, 2, 3, 4, 5].map((rating) => ({ rating, count: 0 }));
+  let sum = 0;
+  let satisfied = 0;
+
+  const items: FeedbackItem[] = rows.map((r) => {
+    sum += r.rating;
+    if (r.rating >= 4) satisfied += 1;
+    const bucket = distribution[r.rating - 1];
+    if (bucket) bucket.count += 1;
+    const u = userById.get(r.user_id);
+    return {
+      id: r.id,
+      rating: r.rating,
+      comment: r.comment,
+      pagePath: r.page_path,
+      createdAt: r.created_at,
+      email: u?.email ?? "(deleted user)",
+      name: u?.name ?? null,
+    };
+  });
+
+  const total = rows.length;
+  return {
+    total,
+    average: total ? sum / total : 0,
+    satisfiedPct: total ? (satisfied / total) * 100 : 0,
+    distribution,
+    items,
+  };
+}
+
 /* ————— Formatting ————— */
 
 /** USD-cents → currency string, with extra precision for sub-dollar sums. */

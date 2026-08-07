@@ -15,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { CommandMenu } from "@/components/command-menu";
+import { FeedbackButton } from "@/components/feedback/feedback-button";
 import { createClient } from "@/lib/supabase/client";
 
 export function AppHeader({
@@ -52,20 +53,25 @@ export function AppHeader({
   return (
     <>
       <header className="sticky top-0 z-20 grid h-14 shrink-0 grid-cols-[auto_1fr_auto] items-center gap-4 bg-sidebar px-4">
-        <Link
-          href="/"
-          aria-label="Rehearse — your projects"
-          className="flex items-center rounded-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-        >
-          <Image
-            src="/rehearse_logo_dark.svg"
-            alt="Rehearse"
-            width={320}
-            height={100}
-            unoptimized
-            className="h-10 w-auto shrink-0"
-          />
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/"
+            aria-label="Rehearse — your projects"
+            className="flex items-center rounded-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+          >
+            <Image
+              src="/rehearse_logo_dark.svg"
+              alt="Rehearse"
+              width={320}
+              height={100}
+              unoptimized
+              className="h-10 w-auto shrink-0"
+            />
+          </Link>
+          <span className="hidden rounded-full border px-2 py-0.5 text-[11px] font-medium text-muted-foreground sm:inline">
+            Free beta
+          </span>
+        </div>
 
         <div className="flex justify-center">
           <button
@@ -80,7 +86,8 @@ export function AppHeader({
           </button>
         </div>
 
-        <div className="flex justify-end">
+        <div className="flex items-center justify-end gap-1">
+          <FeedbackButton />
           <DropdownMenu>
             <DropdownMenuTrigger
               render={

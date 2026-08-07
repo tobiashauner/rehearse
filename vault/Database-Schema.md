@@ -147,6 +147,20 @@ The `>= 0` check blocks negative "refund" inserts. `user_id` is direct (not via
 projects) because usage outlives any one project. Indexed `(user_id, created_at desc)`
 for the monthly-sum budget check.
 
+### `user_feedback` (migration `20260806120000_user_feedback.sql`)
+`id, user_id (→ auth.users, cascade), rating (smallint, check 1–5), comment (text, null),
+page_path (text, null), created_at`
+In-app CSAT: one row per submission from the header **Feedback** popover
+(`components/feedback/feedback-button.tsx` → `submitFeedback` in
+`app/(app)/feedback/actions.ts`). `rating` is the 1–5 satisfaction level; `comment` and
+`page_path` (where it was sent from) are optional. **RLS is select-own + insert-own only**
+(same immutable-record posture as `ai_usage_events` — no update/delete). Super-admins read
+across all users via the service-role client (bypasses RLS); there's no per-user feedback UI.
+Indexed `(created_at desc)` for admin listing.
+**Not yet applied to the hosted DB** as of 2026-08-06 (CLI token expired + `SUPABASE_DB_PASSWORD`
+unset — see [[Backend]]); the `user_feedback` entry in `types/database.ts` was **hand-added**
+to match. Run `supabase db push` + regenerate types once creds are restored to reconcile.
+
 ## Storage buckets
 
 All private. RLS keys off path prefix, not a DB join:
