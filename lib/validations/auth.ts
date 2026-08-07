@@ -7,6 +7,9 @@ export const authSchema = z.object({
 
 export const signupSchema = authSchema.extend({
   name: z.string().min(1, "Name is required"),
+  acceptTerms: z.boolean().refine((v) => v === true, {
+    message: "Please accept the Terms and Privacy Policy",
+  }),
 });
 
 export type AuthValues = z.infer<typeof authSchema>;

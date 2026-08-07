@@ -372,6 +372,16 @@ export function InterviewRunner({
               />
             ) : mode === "voice" ? (
               <div className="space-y-4">
+                {!recording && !busy && (
+                  <p className="flex items-start gap-2 text-xs text-muted-foreground">
+                    <Mic className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
+                    <span>
+                      Your spoken answer is recorded and transcribed (processed
+                      by OpenAI) to generate feedback. Prefer not to? Use “Type
+                      instead.”
+                    </span>
+                  </p>
+                )}
                 {recording && recorder.analyser ? (
                   <div className="flex items-center gap-4 rounded-lg border border-primary/30 bg-primary/5 p-4">
                     <span className="relative flex size-3 shrink-0">

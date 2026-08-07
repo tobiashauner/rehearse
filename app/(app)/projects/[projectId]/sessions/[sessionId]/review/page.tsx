@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/server";
 import { ensureSessionSummary } from "@/app/(app)/projects/[projectId]/sessions/[sessionId]/actions";
+import { AiDisclaimer } from "@/components/ai-disclaimer";
 import { ScoreGauge } from "@/components/score-gauge";
 import { ScoreExplainer } from "@/components/score-explainer";
 import { ScorePill } from "@/components/score-badge";
@@ -176,6 +177,8 @@ export default async function ReviewSessionPage({
           Back to overview
         </Button>
       </div>
+
+      <AiDisclaimer />
 
       {summary ? (
         <>

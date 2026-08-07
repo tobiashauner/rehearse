@@ -79,14 +79,19 @@ export default function WelcomePage() {
            toward the illustration on the right ————— */}
       <div className="bg-[linear-gradient(90deg,oklch(0.36_0.125_205),oklch(0.40_0.12_200)_45%,oklch(0.50_0.11_196))] text-white">
         <header className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-6">
-          <Image
-            src="/rehearse_logo_white.svg"
-            alt="Rehearse"
-            width={320}
-            height={100}
-            unoptimized
-            className="h-10 w-auto shrink-0"
-          />
+          <div className="flex items-center gap-2.5">
+            <Image
+              src="/rehearse_logo_white.svg"
+              alt="Rehearse"
+              width={320}
+              height={100}
+              unoptimized
+              className="h-10 w-auto shrink-0"
+            />
+            <span className="rounded-full bg-white/12 px-2 py-0.5 text-[11px] font-medium text-white/85">
+              Free beta
+            </span>
+          </div>
           <nav className="flex items-center gap-2">
             <AuthPopover
               initialMode="sign-in"
@@ -439,12 +444,32 @@ export default function WelcomePage() {
               © {new Date().getFullYear()}
             </span>
           </div>
-          <Link
-            href="/login"
-            className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-          >
-            Sign in
-          </Link>
+          <nav className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
+            <Link
+              href="/terms"
+              className="underline-offset-4 hover:text-foreground hover:underline"
+            >
+              Terms
+            </Link>
+            <Link
+              href="/privacy"
+              className="underline-offset-4 hover:text-foreground hover:underline"
+            >
+              Privacy
+            </Link>
+            <Link
+              href="/disclaimer"
+              className="underline-offset-4 hover:text-foreground hover:underline"
+            >
+              Disclaimer
+            </Link>
+            <Link
+              href="/login"
+              className="underline-offset-4 hover:text-foreground hover:underline"
+            >
+              Sign in
+            </Link>
+          </nav>
         </div>
       </footer>
     </div>

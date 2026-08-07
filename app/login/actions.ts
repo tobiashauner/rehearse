@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { authSchema, signupSchema, type AuthValues, type SignupValues } from "@/lib/validations/auth";
 import { createClient } from "@/lib/supabase/server";
+import { LEGAL } from "@/lib/legal";
 
 type AuthActionResult = { error?: string; needsConfirmation?: boolean };
 
@@ -33,7 +34,12 @@ export async function signup(values: SignupValues): Promise<AuthActionResult> {
     email: parsed.data.email,
     password: parsed.data.password,
     options: {
-      data: { full_name: parsed.data.name },
+      data: {
+        full_name: parsed.data.name,
+        // Clickwrap record: which version of the terms they accepted, and when.
+        terms_accepted_at: new Date().toISOString(),
+        terms_version: LEGAL.version,
+      },
     },
   });
 

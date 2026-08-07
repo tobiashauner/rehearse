@@ -114,6 +114,47 @@ export function AuthForm({
             </p>
           )}
         </div>
+        {mode === "sign-up" && (
+          <div className="space-y-2">
+            <label
+              htmlFor="auth-terms"
+              className="flex items-start gap-2 text-sm text-muted-foreground"
+            >
+              <input
+                id="auth-terms"
+                type="checkbox"
+                className="mt-0.5 size-4 shrink-0 accent-primary"
+                {...register("acceptTerms")}
+              />
+              <span>
+                I agree to the{" "}
+                <a
+                  href="/terms"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-foreground underline underline-offset-4 hover:text-primary"
+                >
+                  Terms
+                </a>{" "}
+                and{" "}
+                <a
+                  href="/privacy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-foreground underline underline-offset-4 hover:text-primary"
+                >
+                  Privacy Policy
+                </a>
+                .
+              </span>
+            </label>
+            {errors.acceptTerms && (
+              <p className="text-sm text-destructive">
+                {errors.acceptTerms.message}
+              </p>
+            )}
+          </div>
+        )}
         {formError && <p className="text-sm text-destructive">{formError}</p>}
         <Button type="submit" className="w-full" disabled={isPending}>
           {isPending && <Spinner data-icon="inline-start" />}

@@ -4,6 +4,36 @@ Dated log of actual work sessions on this app. Add a new entry at the end of eac
 that changes the app (newest at top). Keep entries short — what changed and why, not a
 diff.
 
+## 2026-08-06 — Legal + disclaimers scaffolding (free beta)
+
+Baseline legal layer for the live free beta — see
+[[Decisions/0032-legal-and-disclaimers-beta]]. **Copy is a US-focused DRAFT template, NOT
+lawyer-reviewed — replace + form the LLC before pricing.** `lib/legal.ts` holds the shared
+metadata (version, effective date, placeholder contacts, subprocessors). Public `(legal)`
+route group with `/terms`, `/privacy`, `/disclaimer` (middleware `publicPaths` allowlist;
+linked from the welcome footer). Signup now has a **required consent checkbox**
+(`acceptTerms` in `signupSchema`); the signup action stamps `terms_accepted_at` +
+`terms_version` into `user_metadata`. In-product notices: `components/ai-disclaimer.tsx` on
+the review page, a recording-consent line in the voice runner, and a "Free beta" pill in the
+app + welcome headers. Covers AI-may-be-wrong, not-advice, no-guarantee, OpenAI processing,
+audio consent, as-is/data-may-reset, 18+, liability cap, and a data-request contact.
+
+## 2026-08-06 — In-app user feedback (CSAT)
+
+Header **Feedback** button → popover with a 1–5 satisfaction scale (faces) + optional
+comment, written to a new `user_feedback` table (migration
+`20260806120000_user_feedback.sql`; select-own + insert-own RLS). New:
+`components/feedback/feedback-button.tsx` (in `app-header`), `app/(app)/feedback/actions.ts`
+(`submitFeedback` — RLS-scoped, sets user_id server-side), `lib/validations/feedback.ts`.
+Captures the current `page_path` for triage. **Admin view** at `/admin/feedback`
+(`buildFeedbackReport` in `lib/admin/data.ts`, `components/admin/feedback-report.tsx`):
+CSAT summary (responses, average, satisfied %), the 1–5 distribution, and every submission
+with its comment/page/user — new **Feedback** tab in the admin nav.
+**Pending apply:** the migration isn't pushed (CLI token expired + `SUPABASE_DB_PASSWORD`
+unset); `types/database.ts` was hand-added to match. Run `supabase db push` (after
+`supabase login` / setting the DB password) then regenerate types — or paste the migration
+SQL into the dashboard SQL editor. Until applied, submitting feedback will error.
+
 ## 2026-08-06 — Password reset flow
 
 Self-serve password reset (was a lockout gap — no recovery existed). Uses the token_hash /

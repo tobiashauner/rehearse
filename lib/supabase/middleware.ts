@@ -53,13 +53,18 @@ export async function updateSession(request: NextRequest) {
         .forEach((cookie) => rewritten.cookies.set(cookie));
       return rewritten;
     }
-    // `/auth/confirm` must run without a session — it's what establishes one
-    // from an email link (e.g. password recovery).
-    if (
-      pathname !== "/login" &&
-      pathname !== "/welcome" &&
-      pathname !== "/auth/confirm"
-    ) {
+    // Public paths reachable without a session: /login, /welcome, the legal
+    // pages, and /auth/confirm (which establishes a session from an email link,
+    // e.g. password recovery).
+    const publicPaths = [
+      "/login",
+      "/welcome",
+      "/auth/confirm",
+      "/terms",
+      "/privacy",
+      "/disclaimer",
+    ];
+    if (!publicPaths.includes(pathname)) {
       const url = request.nextUrl.clone();
       url.pathname = "/login";
       return NextResponse.redirect(url);
